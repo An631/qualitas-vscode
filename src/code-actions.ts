@@ -4,8 +4,8 @@ export class QualitasCodeActionProvider implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 
   provideCodeActions(
-    document: vscode.TextDocument,
-    range: vscode.Range | vscode.Selection,
+    _document: vscode.TextDocument,
+    _range: vscode.Range | vscode.Selection,
     context: vscode.CodeActionContext,
   ): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = [];
@@ -13,17 +13,52 @@ export class QualitasCodeActionProvider implements vscode.CodeActionProvider {
     for (const diag of context.diagnostics) {
       if (diag.source !== 'qualitas') continue;
 
-      // Extract suggestion from the flag — stored in the diagnostic's relatedInformation
-      // or we can look it up from the cached report
       const action = new vscode.CodeAction(
-        `Qualitas: ${diag.message}`,
+        'Fix with AI',
         vscode.CodeActionKind.QuickFix,
       );
       action.diagnostics = [diag];
-      action.isPreferred = false;
+      action.command = {
+        title: 'Fix with AI',
+        command: 'qualitas.fixWithAI',
+        arguments: [diag],
+      };
       actions.push(action);
     }
 
     return actions;
   }
+}
+
+export function registerFixWithAICommand(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(
+    vscode.commands.registerCommand('qualitas.fixWithAI', async (diag: vscode.Diagnostic) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+
+      // Select the flagged range so the AI has context
+      editor.selection = new vscode.Selection(diag.range.start, diag.range.end);
+
+      const prompt = `Refactor this code to fix the following quality issue:\n\n${diag.message}`;
+
+      // Try VS Code's built-in inline chat (works with Copilot and other AI providers)
+      try {
+        await vscode.commands.executeCommand('inlineChat.start', {
+          message: prompt,
+          autoSend: true,
+        });
+      } catch {
+        // Fallback: try opening the chat panel with the prompt
+        try {
+          await vscode.commands.executeCommand('workbench.action.chat.open', {
+            query: prompt,
+          });
+        } catch {
+          vscode.window.showInformationMessage(
+            'Qualitas: No AI assistant found. Install GitHub Copilot or another AI extension to use this feature.',
+          );
+        }
+      }
+    }),
+  );
 }
