@@ -82,7 +82,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "node esbuild.js --production",
-    "verify": "npm run lint && npm run quality",
+    "test": "jest",
+    "verify": "npm run lint && npm run test && npm run quality",
     "lint": "tsc --noEmit",
     "quality": "qualitas ./ -f detail",
     "watch": "node esbuild.js --watch",
@@ -90,10 +91,13 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.25.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.4.0"
   },
   "dependencies": {
