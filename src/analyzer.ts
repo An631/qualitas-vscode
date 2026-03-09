@@ -1,16 +1,19 @@
-import type { FileQualityReport } from 'qualitas';
+import type { FileQualityReport, ProjectQualityReport } from 'qualitas';
 
-let analyzeSourceFn: ((source: string, fileName: string) => FileQualityReport) | null = null;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+let qualitasModule: typeof import('qualitas') | null = null;
 
-function getAnalyzer() {
-  if (analyzeSourceFn) return analyzeSourceFn;
+function getQualitas() {
+  if (qualitasModule) return qualitasModule;
   // Lazy-load to avoid startup cost
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const qualitas = require('qualitas') as typeof import('qualitas');
-  analyzeSourceFn = qualitas.analyzeSource;
-  return analyzeSourceFn;
+  qualitasModule = require('qualitas') as typeof import('qualitas');
+  return qualitasModule;
 }
 
 export function analyzeDocument(source: string, fileName: string): FileQualityReport {
-  return getAnalyzer()(source, fileName);
+  return getQualitas().analyzeSource(source, fileName);
+}
+
+export async function analyzeWorkspace(dirPath: string): Promise<ProjectQualityReport> {
+  return getQualitas().analyzeProject(dirPath);
 }

@@ -48,7 +48,7 @@ export function updateDecorations(
       range,
       renderOptions: {
         after: {
-          contentText: `  ● ${fn.grade} ${fn.score.toFixed(1)}`,
+          contentText: `  * ${fn.grade} ${fn.score.toFixed(1)}`,
         },
       },
     });

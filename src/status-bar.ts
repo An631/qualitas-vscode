@@ -14,7 +14,7 @@ let statusBarItem: vscode.StatusBarItem | null = null;
 export function createStatusBarItem(): vscode.StatusBarItem {
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.command = 'qualitas.showReport';
-  statusBarItem.tooltip = 'Qualitas — file quality score';
+  statusBarItem.tooltip = 'Qualitas - file quality score';
   statusBarItem.show();
   return statusBarItem;
 }

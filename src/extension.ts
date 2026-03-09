@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { analyzeDocument } from './analyzer';
+import { analyzeDocument, analyzeWorkspace } from './analyzer';
 import { getConfig } from './config';
 import { debounce } from './debounce';
 import { clearDecorations, disposeDecorations, updateDecorations } from './decorations';
 import { createDiagnosticCollection, updateDiagnostics } from './diagnostics';
 import { clearStatusBar, createStatusBarItem, disposeStatusBar, updateStatusBar } from './status-bar';
-import type { FileQualityReport } from 'qualitas';
+import type { FileQualityReport, ProjectQualityReport } from 'qualitas';
 
 const SUPPORTED_LANGUAGES = new Set([
   'typescript',
@@ -21,8 +21,19 @@ let outputChannel: vscode.OutputChannel;
 const reportCache = new Map<string, FileQualityReport>();
 
 export function activate(context: vscode.ExtensionContext): void {
+  try {
+    activateInternal(context);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    vscode.window.showErrorMessage(`Qualitas failed to activate: ${msg}`);
+    throw err;
+  }
+}
+
+function activateInternal(context: vscode.ExtensionContext): void {
   diagnosticCollection = createDiagnosticCollection();
   outputChannel = vscode.window.createOutputChannel('Qualitas');
+  outputChannel.appendLine('[qualitas] Extension activating...');
   const statusBar = createStatusBarItem();
 
   const config = getConfig();
@@ -109,11 +120,28 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('qualitas.analyzeWorkspace', async () => {
-      const editors = vscode.window.visibleTextEditors.filter((e) => isSupported(e.document));
-      for (const editor of editors) {
-        runAnalysis(editor);
+      const folders = vscode.workspace.workspaceFolders;
+      if (!folders || folders.length === 0) {
+        vscode.window.showInformationMessage('Qualitas: No workspace folder open.');
+        return;
       }
-      vscode.window.showInformationMessage(`Qualitas: Analyzed ${editors.length} open file(s).`);
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Qualitas: Analyzing workspace...',
+          cancellable: false,
+        },
+        async () => {
+          try {
+            const report = await analyzeWorkspace(folders[0].uri.fsPath);
+            showProjectReport(report);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Qualitas: Workspace analysis failed -${msg}`);
+          }
+        },
+      );
     }),
   );
 
@@ -134,7 +162,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Analyze the currently active editor on activation
   const activeEditor = vscode.window.activeTextEditor;
+  outputChannel.appendLine(`[qualitas] Activated. Active editor: ${activeEditor?.document.fileName ?? 'none'}, language: ${activeEditor?.document.languageId ?? 'n/a'}`);
   if (activeEditor && isSupported(activeEditor.document)) {
+    outputChannel.appendLine(`[qualitas] Running initial analysis on ${activeEditor.document.fileName}`);
     runAnalysis(activeEditor);
   }
 }
@@ -159,7 +189,9 @@ function runAnalysis(editor: vscode.TextEditor): void {
 
   const doc = editor.document;
   try {
+    outputChannel.appendLine(`[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`);
     const report = analyzeDocument(doc.getText(), doc.fileName);
+    outputChannel.appendLine(`[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount} flags=${report.flaggedFunctionCount}`);
     reportCache.set(doc.uri.toString(), report);
 
     updateDiagnostics(diagnosticCollection, doc.uri, report);
@@ -174,8 +206,9 @@ function runAnalysis(editor: vscode.TextEditor): void {
       updateStatusBar(report);
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = err instanceof Error ? err.stack ?? err.message : String(err);
     outputChannel.appendLine(`[error] ${doc.fileName}: ${msg}`);
+    outputChannel.show();
   }
 }
 
@@ -189,26 +222,60 @@ function showReport(report: FileQualityReport): void {
 
   for (const fn of report.functions) {
     outputChannel.appendLine(
-      `  ${fn.name} — ${fn.grade} ${fn.score.toFixed(1)} (L${fn.location.startLine}–${fn.location.endLine})`,
+      `  ${fn.name} -${fn.grade} ${fn.score.toFixed(1)} (L${fn.location.startLine}-${fn.location.endLine})`,
     );
     for (const flag of fn.flags) {
       outputChannel.appendLine(`    [${flag.severity}] ${flag.message}`);
-      outputChannel.appendLine(`    → ${flag.suggestion}`);
+      outputChannel.appendLine(`    -> ${flag.suggestion}`);
     }
   }
 
   for (const cls of report.classes) {
-    outputChannel.appendLine(`  class ${cls.name} — ${cls.grade} ${cls.score.toFixed(1)}`);
+    outputChannel.appendLine(`  class ${cls.name} -${cls.grade} ${cls.score.toFixed(1)}`);
     for (const method of cls.methods) {
       outputChannel.appendLine(
-        `    ${method.name} — ${method.grade} ${method.score.toFixed(1)} (L${method.location.startLine}–${method.location.endLine})`,
+        `    ${method.name} -${method.grade} ${method.score.toFixed(1)} (L${method.location.startLine}-${method.location.endLine})`,
       );
       for (const flag of method.flags) {
         outputChannel.appendLine(`      [${flag.severity}] ${flag.message}`);
-        outputChannel.appendLine(`      → ${flag.suggestion}`);
+        outputChannel.appendLine(`      -> ${flag.suggestion}`);
       }
     }
   }
 
+  outputChannel.show();
+}
+
+function showProjectReport(report: ProjectQualityReport): void {
+  outputChannel.clear();
+  const s = report.summary;
+
+  outputChannel.appendLine('===========================================');
+  outputChannel.appendLine(`  Qualitas Workspace Report`);
+  outputChannel.appendLine('===========================================');
+  outputChannel.appendLine('');
+  outputChannel.appendLine(`  Score:   ${report.score.toFixed(1)} (${report.grade})`);
+  outputChannel.appendLine(`  Files:   ${s.totalFiles}`);
+  outputChannel.appendLine(`  Functions: ${s.totalFunctions} | Classes: ${s.totalClasses}`);
+  outputChannel.appendLine(`  Flagged: ${s.flaggedFiles} files, ${s.flaggedFunctions} functions`);
+  outputChannel.appendLine('');
+  outputChannel.appendLine('  Grade Distribution');
+  outputChannel.appendLine(`    A: ${s.gradeDistribution.a}  B: ${s.gradeDistribution.b}  C: ${s.gradeDistribution.c}  D: ${s.gradeDistribution.d}  F: ${s.gradeDistribution.f}`);
+  outputChannel.appendLine('');
+
+  if (report.worstFunctions.length > 0) {
+    outputChannel.appendLine('  Worst Functions');
+    outputChannel.appendLine('  ---------------');
+    for (const fn of report.worstFunctions) {
+      const file = fn.location.file || '';
+      outputChannel.appendLine(`    ${fn.grade} ${fn.score.toFixed(1).padStart(5)}  ${fn.name}  (${file}:${fn.location.startLine})`);
+      for (const flag of fn.flags) {
+        outputChannel.appendLine(`            [${flag.severity}] ${flag.message}`);
+      }
+    }
+  }
+
+  outputChannel.appendLine('');
+  outputChannel.appendLine('===========================================');
   outputChannel.show();
 }
