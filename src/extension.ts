@@ -254,7 +254,8 @@ function analyzeAndLogDocument(doc: vscode.TextDocument, cfg: ReturnType<typeof 
 }
 
 function updateEditorState(editor: vscode.TextEditor, report: FileQualityReport, cfg: ReturnType<typeof getConfig>): void {
-  updateDiagnostics(diagnosticCollection, editor.document.uri, report, editor.document, cfg.scoreThreshold);
+  const options = {document: editor.document, scoreThreshold: cfg.scoreThreshold};
+  updateDiagnostics(diagnosticCollection, editor.document.uri, report, options);
 
   if (cfg.showInlineScores) {
     updateDecorations(editor, report);

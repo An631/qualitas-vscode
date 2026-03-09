@@ -3,6 +3,11 @@ import type { ClassQualityReport, FileQualityReport, FunctionQualityReport } fro
 
 const DIAGNOSTIC_SOURCE = 'qualitas';
 
+interface DiagnosticsOptions {
+  scoreThreshold?: number;
+  document?: vscode.TextDocument;
+}
+
 export function createDiagnosticCollection(): vscode.DiagnosticCollection {
   return vscode.languages.createDiagnosticCollection(DIAGNOSTIC_SOURCE);
 }
@@ -11,31 +16,61 @@ export function updateDiagnostics(
   collection: vscode.DiagnosticCollection,
   uri: vscode.Uri,
   report: FileQualityReport,
-  document?: vscode.TextDocument,
-  scoreThreshold = 65,
+  options: DiagnosticsOptions = {},
 ): void {
+  const mergedOptions: DiagnosticsOptions = { scoreThreshold: 65, ...options };
   const diagnostics: vscode.Diagnostic[] = [];
 
-  if (report.fileScope) {
-    const d = buildFunctionDiagnostic(report.fileScope, scoreThreshold, document);
-    if (d) diagnostics.push(d);
-  }
-
-  for (const fn of report.functions) {
-    const d = buildFunctionDiagnostic(fn, scoreThreshold, document);
-    if (d) diagnostics.push(d);
-  }
-
-  for (const cls of report.classes) {
-    const d = buildClassDiagnostic(cls, scoreThreshold, document);
-    if (d) diagnostics.push(d);
-    for (const method of cls.methods) {
-      const md = buildFunctionDiagnostic(method, scoreThreshold, document);
-      if (md) diagnostics.push(md);
-    }
-  }
+  addFileScopeDiagnostic(diagnostics, report, mergedOptions);
+  addFunctionDiagnostics(diagnostics, report, mergedOptions);
+  addClassDiagnostics(diagnostics, report, mergedOptions);
 
   collection.set(uri, diagnostics);
+}
+
+function addFileScopeDiagnostic(
+  diagnostics: vscode.Diagnostic[],
+  report: FileQualityReport,
+  options: DiagnosticsOptions,
+): void {
+  if (report.fileScope) {
+    const d = buildFunctionDiagnostic(report.fileScope, options);
+    if (d) diagnostics.push(d);
+  }
+}
+
+function addFunctionDiagnostics(
+  diagnostics: vscode.Diagnostic[],
+  report: FileQualityReport,
+  options: DiagnosticsOptions,
+): void {
+  for (const fn of report.functions) {
+    const d = buildFunctionDiagnostic(fn, options);
+    if (d) diagnostics.push(d);
+  }
+}
+
+function addClassDiagnostics(
+  diagnostics: vscode.Diagnostic[],
+  report: FileQualityReport,
+  options: DiagnosticsOptions,
+): void {
+  for (const cls of report.classes) {
+    const d = buildClassDiagnostic(cls, options);
+    if (d) diagnostics.push(d);
+    addMethodDiagnostics(diagnostics, cls, options);
+  }
+}
+
+function addMethodDiagnostics(
+  diagnostics: vscode.Diagnostic[],
+  cls: ClassQualityReport,
+  options: DiagnosticsOptions,
+): void {
+  for (const method of cls.methods) {
+    const md = buildFunctionDiagnostic(method, options);
+    if (md) diagnostics.push(md);
+  }
 }
 
 function nameRange(
@@ -61,20 +96,32 @@ function nameRange(
 
 function buildFunctionDiagnostic(
   fn: FunctionQualityReport,
-  scoreThreshold: number,
-  document?: vscode.TextDocument,
+  options: DiagnosticsOptions,
 ): vscode.Diagnostic | null {
+  const scoreThreshold = options.scoreThreshold ?? 65;
   const hasFlags = fn.flags.length > 0;
   const belowThreshold = fn.score < scoreThreshold;
   if (!hasFlags && !belowThreshold) return null;
 
   const line = fn.location.startLine - 1;
-  const range = nameRange(fn.name, line, document);
+  const range = nameRange(fn.name, line, options.document);
+  const lines = buildFunctionDiagnosticLines(fn, scoreThreshold, hasFlags);
+  const severity = determineFunctionSeverity(fn);
 
+  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  diag.source = DIAGNOSTIC_SOURCE;
+  return diag;
+}
+
+function buildFunctionDiagnosticLines(
+  fn: FunctionQualityReport,
+  scoreThreshold: number,
+  hasFlags: boolean,
+): string[] {
   const lines: string[] = [];
   lines.push(`${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`);
 
-  if (belowThreshold) {
+  if (fn.score < scoreThreshold) {
     lines.push('');
     lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
@@ -87,46 +134,81 @@ function buildFunctionDiagnostic(
     }
   }
 
-  const severity = hasFlags && fn.flags.some((f) => f.severity === 'error')
-    ? vscode.DiagnosticSeverity.Warning
-    : vscode.DiagnosticSeverity.Information;
+  return lines;
+}
+
+function determineFunctionSeverity(fn: FunctionQualityReport): vscode.DiagnosticSeverity {
+  const hasErrorFlag = fn.flags.some((f) => f.severity === 'error');
+  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
+}
+
+function buildClassDiagnostic(
+  cls: ClassQualityReport,
+  options: DiagnosticsOptions,
+): vscode.Diagnostic | null {
+  const scoreThreshold = options.scoreThreshold ?? 65;
+  const flaggedMethods = cls.methods.filter(
+    (m) => m.flags.length > 0 || m.score < scoreThreshold,
+  );
+  
+  if (!shouldCreateClassDiagnostic(cls, scoreThreshold, flaggedMethods)) {
+    return null;
+  }
+
+  const line = cls.location.startLine - 1;
+  const range = nameRange(cls.name, line, options.document);
+  const lines = buildClassDiagnosticLines(cls, scoreThreshold, cls.flags.length > 0, flaggedMethods);
+  const severity = determineClassSeverity(cls);
 
   const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
   diag.source = DIAGNOSTIC_SOURCE;
   return diag;
 }
 
-function buildClassDiagnostic(
+function shouldCreateClassDiagnostic(
   cls: ClassQualityReport,
   scoreThreshold: number,
-  document?: vscode.TextDocument,
-): vscode.Diagnostic | null {
-  const hasClassFlags = cls.flags.length > 0;
-  const belowThreshold = cls.score < scoreThreshold;
-  const flaggedMethods = cls.methods.filter(
-    (m) => m.flags.length > 0 || m.score < scoreThreshold,
-  );
-  if (!hasClassFlags && !belowThreshold && flaggedMethods.length === 0) return null;
+  flaggedMethods: ClassQualityReport['methods'],
+): boolean {
+  return cls.flags.length > 0 || cls.score < scoreThreshold || flaggedMethods.length > 0;
+}
 
-  const line = cls.location.startLine - 1;
-  const range = nameRange(cls.name, line, document);
-
+function buildClassDiagnosticLines(
+  cls: ClassQualityReport,
+  scoreThreshold: number,
+  hasClassFlags: boolean,
+  flaggedMethods: ClassQualityReport['methods'],
+): string[] {
   const lines: string[] = [];
-  lines.push(`class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`);
+  addClassHeaderLine(lines, cls);
+  addScoreWarning(lines, cls, scoreThreshold);
+  addClassFlags(lines, cls);
+  addMethodSummary(lines, flaggedMethods);
+  return lines;
+}
 
-  if (belowThreshold) {
+function addClassHeaderLine(lines: string[], cls: ClassQualityReport): void {
+  lines.push(`class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`);
+}
+
+function addScoreWarning(lines: string[], cls: ClassQualityReport, scoreThreshold: number): void {
+  if (cls.score < scoreThreshold) {
     lines.push('');
     lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
+}
 
-  if (hasClassFlags) {
+function addClassFlags(lines: string[], cls: ClassQualityReport): void {
+  if (cls.flags.length > 0) {
     lines.push('');
     for (const flag of cls.flags) {
       lines.push(`- ${flag.message}`);
       lines.push(`  ${flag.suggestion}`);
     }
   }
+}
 
+function addMethodSummary(lines: string[], flaggedMethods: ClassQualityReport['methods']): void {
   if (flaggedMethods.length > 0) {
     lines.push('');
     lines.push(`${flaggedMethods.length} method(s) need attention:`);
@@ -134,13 +216,10 @@ function buildClassDiagnostic(
       lines.push(`  ${m.name} scored ${m.grade} (${m.score.toFixed(1)}/100)`);
     }
   }
+}
 
+function determineClassSeverity(cls: ClassQualityReport): vscode.DiagnosticSeverity {
   const allFlags = [...cls.flags, ...cls.methods.flatMap((m) => m.flags)];
-  const severity = allFlags.some((f) => f.severity === 'error')
-    ? vscode.DiagnosticSeverity.Warning
-    : vscode.DiagnosticSeverity.Information;
-
-  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
-  diag.source = DIAGNOSTIC_SOURCE;
-  return diag;
+  const hasErrorFlag = allFlags.some((f) => f.severity === 'error');
+  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
 }

@@ -123,8 +123,8 @@ describe('updateDiagnostics', () => {
       collection as unknown as vscode.DiagnosticCollection,
       uri,
       report,
-      undefined,
-      65,
+      {document: undefined,
+      scoreThreshold: 65}
     );
     const diagnostics = collection.set.mock.calls[0][1];
     expect(diagnostics).toHaveLength(1);
@@ -143,8 +143,7 @@ describe('updateDiagnostics', () => {
       collection as unknown as vscode.DiagnosticCollection,
       uri,
       report,
-      undefined,
-      65,
+      {document: undefined, scoreThreshold: 65},
     );
     const diagnostics = collection.set.mock.calls[0][1];
     expect(diagnostics).toHaveLength(0);
@@ -200,8 +199,7 @@ describe('updateDiagnostics', () => {
       collection as unknown as vscode.DiagnosticCollection,
       uri,
       report,
-      undefined,
-      65,
+      {document: undefined, scoreThreshold: 65}
     );
     const diagnostics = collection.set.mock.calls[0][1];
     expect(diagnostics).toHaveLength(1);
