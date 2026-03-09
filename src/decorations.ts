@@ -1,14 +1,6 @@
 import * as vscode from 'vscode';
 import type { FileQualityReport, Grade, FunctionQualityReport } from 'qualitas';
 
-const GRADE_COLORS: Record<Grade, string> = {
-  A: '#4caf50',
-  B: '#00bcd4',
-  C: '#ffc107',
-  D: '#ff5722',
-  F: '#d32f2f',
-};
-
 // ── CodeLens provider ────────────────────────────────────────────────────────
 
 const reportsByUri = new Map<string, FileQualityReport>();

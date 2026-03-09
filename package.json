@@ -40,6 +40,10 @@
       {
         "command": "qualitas.showReport",
         "title": "Qualitas: Show Report"
+      },
+      {
+        "command": "qualitas.fixAllWithAI",
+        "title": "Qualitas: Fix All Issues with AI"
       }
     ],
     "configuration": {

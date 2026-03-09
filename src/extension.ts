@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { analyzeDocument, analyzeWorkspace } from './analyzer';
 import { getConfig } from './config';
 import { debounce } from './debounce';
-import { QualitasCodeActionProvider, registerFixWithAICommand } from './code-actions';
+import { QualitasCodeActionProvider, registerAICommands } from './code-actions';
 import { clearDecorations, disposeDecorations, registerCodeLensProvider, updateDecorations } from './decorations';
 import { createDiagnosticCollection, updateDiagnostics } from './diagnostics';
 import { clearStatusBar, createStatusBarItem, disposeStatusBar, updateStatusBar } from './status-bar';
@@ -34,7 +34,10 @@ function activateInternal(context: vscode.ExtensionContext): void {
   outputChannel.appendLine('[qualitas] Extension activating...');
   const statusBar = createStatusBarItem();
   registerCodeLensProvider(context);
-  registerFixWithAICommand(context);
+  registerAICommands(context, {
+    getReport: (uri) => reportCache.get(uri),
+    getThreshold: () => getConfig().scoreThreshold,
+  });
 
   // Register code action provider for all file types
   context.subscriptions.push(
@@ -159,6 +162,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       handleShowReportCommand();
     }),
   );
+
 }
 
 function handleAnalyzeFileCommand(): void {
