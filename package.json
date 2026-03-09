@@ -82,6 +82,54 @@
           "minimum": 0,
           "maximum": 100,
           "description": "Minimum acceptable quality score (0-100). Functions and classes scoring below this are flagged."
+        },
+        "qualitas.profile": {
+          "type": "string",
+          "default": "default",
+          "enum": ["default", "cc-focused", "data-focused", "strict"],
+          "enumDescriptions": [
+            "Balanced weights across all 5 quality pillars",
+            "Emphasizes cognitive flow complexity",
+            "Emphasizes data complexity (Halstead metrics)",
+            "Tighter thresholds across all metrics"
+          ],
+          "description": "Analysis profile that controls metric weights and thresholds."
+        },
+        "qualitas.includeTests": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include test files in workspace analysis."
+        },
+        "qualitas.weights": {
+          "type": "object",
+          "default": {},
+          "properties": {
+            "cognitiveFlow": { "type": "number", "description": "Weight for cognitive flow complexity (CFC)" },
+            "dataComplexity": { "type": "number", "description": "Weight for data complexity (Halstead)" },
+            "identifierReference": { "type": "number", "description": "Weight for identifier reference complexity (IRC)" },
+            "dependencyCoupling": { "type": "number", "description": "Weight for dependency coupling (DC)" },
+            "structural": { "type": "number", "description": "Weight for structural metrics (LOC, params, nesting)" }
+          },
+          "additionalProperties": false,
+          "description": "Custom weights for the 5 quality pillars. Overrides the selected profile. Values should sum to 1.0."
+        },
+        "qualitas.flagOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Override flag thresholds per metric. Set to false to disable a flag, or {\"warn\": N, \"error\": M} to customize thresholds. Keys: HIGH_COGNITIVE_FLOW, HIGH_DATA_COMPLEXITY, HIGH_IDENTIFIER_CHURN, TOO_MANY_PARAMS, TOO_LONG, DEEP_NESTING, HIGH_COUPLING, EXCESSIVE_RETURNS, HIGH_HALSTEAD_EFFORT.",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "boolean" },
+              {
+                "type": "object",
+                "properties": {
+                  "warn": { "type": "number" },
+                  "error": { "type": "number" }
+                },
+                "required": ["warn", "error"]
+              }
+            ]
+          }
         }
       }
     }

@@ -132,7 +132,8 @@ function activateInternal(context: vscode.ExtensionContext): void {
         },
         async () => {
           try {
-            const report = await analyzeWorkspace(folders[0].uri.fsPath);
+            const cfg2 = getConfig();
+            const report = await analyzeWorkspace(folders[0].uri.fsPath, cfg2.analysisOptions);
             showProjectReport(report);
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
@@ -192,7 +193,7 @@ function runAnalysis(editor: vscode.TextEditor): void {
   const doc = editor.document;
   try {
     outputChannel.appendLine(`[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`);
-    const report = analyzeDocument(doc.getText(), doc.fileName);
+    const report = analyzeDocument(doc.getText(), doc.fileName, cfg.analysisOptions);
     outputChannel.appendLine(`[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount} flags=${report.flaggedFunctionCount}`);
     reportCache.set(doc.uri.toString(), report);
 
