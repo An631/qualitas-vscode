@@ -6,13 +6,10 @@ import { clearDecorations, disposeDecorations, updateDecorations } from './decor
 import { createDiagnosticCollection, updateDiagnostics } from './diagnostics';
 import { clearStatusBar, createStatusBarItem, disposeStatusBar, updateStatusBar } from './status-bar';
 import type { FileQualityReport, ProjectQualityReport } from 'qualitas';
+import { extname } from 'path';
 
-const SUPPORTED_LANGUAGES = new Set([
-  'typescript',
-  'javascript',
-  'typescriptreact',
-  'javascriptreact',
-]);
+// Cache extensions that qualitas doesn't support, so we don't retry them
+const unsupportedExtensions = new Set<string>();
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 let outputChannel: vscode.OutputChannel;
@@ -113,7 +110,7 @@ function activateInternal(context: vscode.ExtensionContext): void {
       if (editor && isSupported(editor.document)) {
         runAnalysis(editor);
       } else {
-        vscode.window.showInformationMessage('Qualitas: Open a TypeScript or JavaScript file to analyze.');
+        vscode.window.showInformationMessage('Qualitas: Open a supported source file to analyze.');
       }
     }),
   );
@@ -176,7 +173,11 @@ export function deactivate(): void {
 }
 
 function isSupported(doc: vscode.TextDocument): boolean {
-  return SUPPORTED_LANGUAGES.has(doc.languageId);
+  const ext = extname(doc.fileName).toLowerCase();
+  if (!ext || unsupportedExtensions.has(ext)) return false;
+  // Skip untitled/virtual documents with no real file extension
+  if (doc.uri.scheme !== 'file') return false;
+  return true;
 }
 
 function createDebouncedAnalyze(delay: number) {
@@ -206,9 +207,15 @@ function runAnalysis(editor: vscode.TextEditor): void {
       updateStatusBar(report);
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.stack ?? err.message : String(err);
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('Unsupported file type')) {
+      const ext = extname(doc.fileName).toLowerCase();
+      unsupportedExtensions.add(ext);
+      clearDecorations(editor);
+      clearStatusBar();
+      return;
+    }
     outputChannel.appendLine(`[error] ${doc.fileName}: ${msg}`);
-    outputChannel.show();
   }
 }
 
