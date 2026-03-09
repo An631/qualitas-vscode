@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { FileQualityReport, FunctionQualityReport, RefactoringFlag } from 'qualitas';
+import type { ClassQualityReport, FileQualityReport, FunctionQualityReport } from 'qualitas';
 
 const DIAGNOSTIC_SOURCE = 'qualitas';
 
@@ -11,57 +11,136 @@ export function updateDiagnostics(
   collection: vscode.DiagnosticCollection,
   uri: vscode.Uri,
   report: FileQualityReport,
+  document?: vscode.TextDocument,
+  scoreThreshold = 65,
 ): void {
   const diagnostics: vscode.Diagnostic[] = [];
 
-  // File-scope flags
   if (report.fileScope) {
-    addFunctionDiagnostics(diagnostics, report.fileScope);
+    const d = buildFunctionDiagnostic(report.fileScope, scoreThreshold, document);
+    if (d) diagnostics.push(d);
   }
 
-  // Function-level flags
   for (const fn of report.functions) {
-    addFunctionDiagnostics(diagnostics, fn);
+    const d = buildFunctionDiagnostic(fn, scoreThreshold, document);
+    if (d) diagnostics.push(d);
   }
 
-  // Class method flags
   for (const cls of report.classes) {
+    const d = buildClassDiagnostic(cls, scoreThreshold, document);
+    if (d) diagnostics.push(d);
     for (const method of cls.methods) {
-      addFunctionDiagnostics(diagnostics, method);
+      const md = buildFunctionDiagnostic(method, scoreThreshold, document);
+      if (md) diagnostics.push(md);
     }
   }
 
   collection.set(uri, diagnostics);
 }
 
-function addFunctionDiagnostics(
-  diagnostics: vscode.Diagnostic[],
+function nameRange(
+  name: string,
+  line: number,
+  document?: vscode.TextDocument,
+): vscode.Range {
+  if (document && line < document.lineCount) {
+    const lineText = document.lineAt(line).text;
+    const nameIdx = lineText.indexOf(name);
+    if (nameIdx >= 0) {
+      return new vscode.Range(
+        new vscode.Position(line, nameIdx),
+        new vscode.Position(line, nameIdx + name.length),
+      );
+    }
+  }
+  return new vscode.Range(
+    new vscode.Position(line, 0),
+    new vscode.Position(line, Number.MAX_SAFE_INTEGER),
+  );
+}
+
+function buildFunctionDiagnostic(
   fn: FunctionQualityReport,
-): void {
-  for (const flag of fn.flags) {
-    const range = new vscode.Range(
-      new vscode.Position(fn.location.startLine - 1, 0),
-      new vscode.Position(fn.location.endLine - 1, Number.MAX_SAFE_INTEGER),
-    );
-    const diag = new vscode.Diagnostic(range, formatFlagMessage(fn.name, flag), mapSeverity(flag));
-    diag.source = DIAGNOSTIC_SOURCE;
-    diag.code = flag.flagType;
-    diagnostics.push(diag);
+  scoreThreshold: number,
+  document?: vscode.TextDocument,
+): vscode.Diagnostic | null {
+  const hasFlags = fn.flags.length > 0;
+  const belowThreshold = fn.score < scoreThreshold;
+  if (!hasFlags && !belowThreshold) return null;
+
+  const line = fn.location.startLine - 1;
+  const range = nameRange(fn.name, line, document);
+
+  const lines: string[] = [];
+  lines.push(`${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`);
+
+  if (belowThreshold) {
+    lines.push('');
+    lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
+
+  if (hasFlags) {
+    lines.push('');
+    for (const flag of fn.flags) {
+      lines.push(`- ${flag.message}`);
+      lines.push(`  ${flag.suggestion}`);
+    }
+  }
+
+  const severity = hasFlags && fn.flags.some((f) => f.severity === 'error')
+    ? vscode.DiagnosticSeverity.Warning
+    : vscode.DiagnosticSeverity.Information;
+
+  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  diag.source = DIAGNOSTIC_SOURCE;
+  return diag;
 }
 
-function mapSeverity(flag: RefactoringFlag): vscode.DiagnosticSeverity {
-  switch (flag.severity) {
-    case 'error':
-      return vscode.DiagnosticSeverity.Warning;
-    case 'warning':
-      return vscode.DiagnosticSeverity.Information;
-    case 'info':
-      return vscode.DiagnosticSeverity.Hint;
-  }
-}
+function buildClassDiagnostic(
+  cls: ClassQualityReport,
+  scoreThreshold: number,
+  document?: vscode.TextDocument,
+): vscode.Diagnostic | null {
+  const hasClassFlags = cls.flags.length > 0;
+  const belowThreshold = cls.score < scoreThreshold;
+  const flaggedMethods = cls.methods.filter(
+    (m) => m.flags.length > 0 || m.score < scoreThreshold,
+  );
+  if (!hasClassFlags && !belowThreshold && flaggedMethods.length === 0) return null;
 
-function formatFlagMessage(fnName: string, flag: RefactoringFlag): string {
-  const metric = `${flag.observedValue} (threshold: ${flag.threshold})`;
-  return `${fnName}: ${flag.message}\nMetric: ${metric}\nSuggestion: ${flag.suggestion}`;
+  const line = cls.location.startLine - 1;
+  const range = nameRange(cls.name, line, document);
+
+  const lines: string[] = [];
+  lines.push(`class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`);
+
+  if (belowThreshold) {
+    lines.push('');
+    lines.push(`Score is below the threshold of ${scoreThreshold}.`);
+  }
+
+  if (hasClassFlags) {
+    lines.push('');
+    for (const flag of cls.flags) {
+      lines.push(`- ${flag.message}`);
+      lines.push(`  ${flag.suggestion}`);
+    }
+  }
+
+  if (flaggedMethods.length > 0) {
+    lines.push('');
+    lines.push(`${flaggedMethods.length} method(s) need attention:`);
+    for (const m of flaggedMethods) {
+      lines.push(`  ${m.name} scored ${m.grade} (${m.score.toFixed(1)}/100)`);
+    }
+  }
+
+  const allFlags = [...cls.flags, ...cls.methods.flatMap((m) => m.flags)];
+  const severity = allFlags.some((f) => f.severity === 'error')
+    ? vscode.DiagnosticSeverity.Warning
+    : vscode.DiagnosticSeverity.Information;
+
+  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  diag.source = DIAGNOSTIC_SOURCE;
+  return diag;
 }

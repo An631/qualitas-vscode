@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { analyzeDocument, analyzeWorkspace } from './analyzer';
 import { getConfig } from './config';
 import { debounce } from './debounce';
-import { clearDecorations, disposeDecorations, updateDecorations } from './decorations';
+import { clearDecorations, disposeDecorations, registerCodeLensProvider, updateDecorations } from './decorations';
 import { createDiagnosticCollection, updateDiagnostics } from './diagnostics';
 import { clearStatusBar, createStatusBarItem, disposeStatusBar, updateStatusBar } from './status-bar';
 import type { FileQualityReport, ProjectQualityReport } from 'qualitas';
@@ -32,6 +32,7 @@ function activateInternal(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel('Qualitas');
   outputChannel.appendLine('[qualitas] Extension activating...');
   const statusBar = createStatusBarItem();
+  registerCodeLensProvider(context);
 
   const config = getConfig();
 
@@ -195,7 +196,7 @@ function runAnalysis(editor: vscode.TextEditor): void {
     outputChannel.appendLine(`[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount} flags=${report.flaggedFunctionCount}`);
     reportCache.set(doc.uri.toString(), report);
 
-    updateDiagnostics(diagnosticCollection, doc.uri, report);
+    updateDiagnostics(diagnosticCollection, doc.uri, report, doc, cfg.scoreThreshold);
 
     if (cfg.showInlineScores) {
       updateDecorations(editor, report);

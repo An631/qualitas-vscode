@@ -2,7 +2,7 @@
   "name": "qualitas-vscode",
   "displayName": "Qualitas",
   "description": "Real-time code quality scores, refactoring flags, and improvement suggestions inline — powered by qualitas",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "qualitas",
   "license": "MIT",
   "engines": {
@@ -75,6 +75,13 @@
           "type": "boolean",
           "default": true,
           "description": "Show file quality score in the status bar"
+        },
+        "qualitas.scoreThreshold": {
+          "type": "number",
+          "default": 65,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum acceptable quality score (0-100). Functions and classes scoring below this are flagged."
         }
       }
     }

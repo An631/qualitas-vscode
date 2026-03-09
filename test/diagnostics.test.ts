@@ -48,6 +48,13 @@ function makeReport(overrides: Partial<FileQualityReport> = {}): FileQualityRepo
   };
 }
 
+const mockCollection = () => ({
+  set: jest.fn(),
+  delete: jest.fn(),
+  clear: jest.fn(),
+  dispose: jest.fn(),
+});
+
 describe('createDiagnosticCollection', () => {
   it('creates a diagnostic collection via vscode API', () => {
     const collection = createDiagnosticCollection();
@@ -57,24 +64,20 @@ describe('createDiagnosticCollection', () => {
 });
 
 describe('updateDiagnostics', () => {
-  it('creates diagnostics from function flags', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
-    const uri = { toString: () => 'file:///test.ts' } as unknown as vscode.Uri;
+  it('creates a diagnostic for a function with flags', () => {
+    const collection = mockCollection();
+    const uri = {} as vscode.Uri;
     const report = makeReport();
 
     updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
 
-    expect(collection.set).toHaveBeenCalledTimes(1);
-    const [setUri, diagnostics] = collection.set.mock.calls[0];
-    expect(setUri).toBe(uri);
+    const diagnostics = collection.set.mock.calls[0][1];
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].source).toBe('qualitas');
-    expect(diagnostics[0].code).toBe('HIGH_COGNITIVE_FLOW');
-    expect(diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Warning);
   });
 
-  it('maps error severity to Warning', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
+  it('uses Warning severity when flags have error severity', () => {
+    const collection = mockCollection();
     const uri = {} as vscode.Uri;
     const report = makeReport({
       functions: [makeFunction({ flags: [makeFlag({ severity: 'error' })] })],
@@ -85,8 +88,8 @@ describe('updateDiagnostics', () => {
     expect(diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Warning);
   });
 
-  it('maps warning severity to Information', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
+  it('uses Information severity when only warning flags', () => {
+    const collection = mockCollection();
     const uri = {} as vscode.Uri;
     const report = makeReport({
       functions: [makeFunction({ flags: [makeFlag({ severity: 'warning' })] })],
@@ -97,32 +100,58 @@ describe('updateDiagnostics', () => {
     expect(diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Information);
   });
 
-  it('maps info severity to Hint', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
-    const uri = {} as vscode.Uri;
-    const report = makeReport({
-      functions: [makeFunction({ flags: [makeFlag({ severity: 'info' })] })],
-    });
-
-    updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
-    const diagnostics = collection.set.mock.calls[0][1];
-    expect(diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Hint);
-  });
-
-  it('includes metric and suggestion in diagnostic message', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
+  it('includes score and flag details in the message', () => {
+    const collection = mockCollection();
     const uri = {} as vscode.Uri;
     const report = makeReport();
 
     updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
     const msg = collection.set.mock.calls[0][1][0].message;
-    expect(msg).toContain('testFn');
-    expect(msg).toContain('51 (threshold: 19)');
+    expect(msg).toContain('testFn scored C (45.0/100)');
+    expect(msg).toContain('CFC is too high');
     expect(msg).toContain('Extract nested branches');
   });
 
-  it('creates diagnostics for class method flags', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
+  it('flags functions below score threshold even without flags', () => {
+    const collection = mockCollection();
+    const uri = {} as vscode.Uri;
+    const report = makeReport({
+      functions: [makeFunction({ score: 60, grade: 'C', flags: [] })],
+    });
+
+    updateDiagnostics(
+      collection as unknown as vscode.DiagnosticCollection,
+      uri,
+      report,
+      undefined,
+      65,
+    );
+    const diagnostics = collection.set.mock.calls[0][1];
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('scored C (60.0/100)');
+    expect(diagnostics[0].message).toContain('below the threshold of 65');
+  });
+
+  it('does not flag functions above score threshold with no flags', () => {
+    const collection = mockCollection();
+    const uri = {} as vscode.Uri;
+    const report = makeReport({
+      functions: [makeFunction({ score: 90, grade: 'A', flags: [] })],
+    });
+
+    updateDiagnostics(
+      collection as unknown as vscode.DiagnosticCollection,
+      uri,
+      report,
+      undefined,
+      65,
+    );
+    const diagnostics = collection.set.mock.calls[0][1];
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('creates diagnostics for class and its flagged methods', () => {
+    const collection = mockCollection();
     const uri = {} as vscode.Uri;
     const method = makeFunction({ name: 'myMethod' });
     const report = makeReport({
@@ -143,19 +172,73 @@ describe('updateDiagnostics', () => {
 
     updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
     const diagnostics = collection.set.mock.calls[0][1];
-    expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toContain('myMethod');
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].message).toContain('class MyClass');
+    expect(diagnostics[1].message).toContain('myMethod scored');
   });
 
-  it('produces no diagnostics when there are no flags', () => {
-    const collection = { set: jest.fn(), delete: jest.fn(), clear: jest.fn(), dispose: jest.fn() };
+  it('flags class below threshold even without flags', () => {
+    const collection = mockCollection();
     const uri = {} as vscode.Uri;
     const report = makeReport({
-      functions: [makeFunction({ flags: [] })],
+      functions: [],
+      classes: [
+        {
+          name: 'WeakClass',
+          score: 50,
+          grade: 'C',
+          needsRefactoring: true,
+          flags: [],
+          structuralMetrics: {} as any,
+          methods: [makeFunction({ score: 90, grade: 'A', flags: [] })],
+          location: { file: 'test.ts', startLine: 1, endLine: 20, startCol: 0, endCol: 0 },
+        },
+      ],
+    });
+
+    updateDiagnostics(
+      collection as unknown as vscode.DiagnosticCollection,
+      uri,
+      report,
+      undefined,
+      65,
+    );
+    const diagnostics = collection.set.mock.calls[0][1];
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('class WeakClass scored C');
+    expect(diagnostics[0].message).toContain('below the threshold of 65');
+  });
+
+  it('produces no diagnostics when everything passes', () => {
+    const collection = mockCollection();
+    const uri = {} as vscode.Uri;
+    const report = makeReport({
+      functions: [makeFunction({ score: 90, grade: 'A', flags: [] })],
     });
 
     updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
     const diagnostics = collection.set.mock.calls[0][1];
     expect(diagnostics).toHaveLength(0);
+  });
+
+  it('consolidates multiple flags into one diagnostic', () => {
+    const collection = mockCollection();
+    const uri = {} as vscode.Uri;
+    const report = makeReport({
+      functions: [
+        makeFunction({
+          flags: [
+            makeFlag({ message: 'CFC is too high' }),
+            makeFlag({ message: 'Too many parameters' }),
+          ],
+        }),
+      ],
+    });
+
+    updateDiagnostics(collection as unknown as vscode.DiagnosticCollection, uri, report);
+    const diagnostics = collection.set.mock.calls[0][1];
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('CFC is too high');
+    expect(diagnostics[0].message).toContain('Too many parameters');
   });
 });

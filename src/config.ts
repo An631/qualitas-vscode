@@ -7,6 +7,7 @@ export interface QualitasExtensionConfig {
   changeDelay: number;
   showInlineScores: boolean;
   showStatusBar: boolean;
+  scoreThreshold: number;
 }
 
 export function getConfig(): QualitasExtensionConfig {
@@ -18,5 +19,6 @@ export function getConfig(): QualitasExtensionConfig {
     changeDelay: cfg.get('changeDelay', 1000),
     showInlineScores: cfg.get('showInlineScores', true),
     showStatusBar: cfg.get('showStatusBar', true),
+    scoreThreshold: cfg.get('scoreThreshold', 65),
   };
 }

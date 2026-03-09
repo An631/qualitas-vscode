@@ -9,83 +9,109 @@ const GRADE_COLORS: Record<Grade, string> = {
   F: '#d32f2f',
 };
 
-let decorationTypes: Map<Grade, vscode.TextEditorDecorationType> | null = null;
+// ── CodeLens provider ────────────────────────────────────────────────────────
 
-function getDecorationTypes(): Map<Grade, vscode.TextEditorDecorationType> {
-  if (decorationTypes) return decorationTypes;
-  decorationTypes = new Map();
-  for (const grade of ['A', 'B', 'C', 'D', 'F'] as Grade[]) {
-    decorationTypes.set(
-      grade,
-      vscode.window.createTextEditorDecorationType({
-        after: {
-          color: GRADE_COLORS[grade],
-          margin: '0 0 0 1em',
-          fontWeight: 'normal',
-          fontStyle: 'normal',
-        },
-        isWholeLine: false,
+const reportsByUri = new Map<string, FileQualityReport>();
+const onDidChangeCodeLensesEmitter = new vscode.EventEmitter<void>();
+let codeLensProvider: vscode.Disposable | null = null;
+
+class QualitasCodeLensProvider implements vscode.CodeLensProvider {
+  readonly onDidChangeCodeLenses = onDidChangeCodeLensesEmitter.event;
+
+  provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+    const report = reportsByUri.get(document.uri.toString());
+    if (!report) return [];
+
+    const lenses: vscode.CodeLens[] = [];
+
+    // File score on line 1
+    lenses.push(
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: `Score ${report.grade}: ${report.score.toFixed(1)}`,
+        command: 'qualitas.showReport',
+        tooltip: buildFileTooltip(report),
       }),
     );
+
+    const addLens = (fn: FunctionQualityReport) => {
+      const line = fn.location.startLine - 1;
+      lenses.push(
+        new vscode.CodeLens(new vscode.Range(line, 0, line, 0), {
+          title: `Score ${fn.grade}: ${fn.score.toFixed(1)}`,
+          command: 'qualitas.showReport',
+          tooltip: buildFunctionTooltip(fn),
+        }),
+      );
+    };
+
+    for (const fn of report.functions) addLens(fn);
+    for (const cls of report.classes) {
+      // Class-level lens
+      const clsLine = cls.location.startLine - 1;
+      lenses.push(
+        new vscode.CodeLens(new vscode.Range(clsLine, 0, clsLine, 0), {
+          title: `Score ${cls.grade}: ${cls.score.toFixed(1)}`,
+          command: 'qualitas.showReport',
+          tooltip: `Class ${cls.name} - quality score ${cls.grade} ${cls.score.toFixed(1)}`,
+        }),
+      );
+      for (const method of cls.methods) addLens(method);
+    }
+
+    return lenses;
   }
-  return decorationTypes;
+}
+
+function buildFileTooltip(report: FileQualityReport): string {
+  const lines = [
+    `File scored ${report.grade} (${report.score.toFixed(1)}/100)`,
+    '',
+    `Functions: ${report.functionCount}  |  Classes: ${report.classCount}  |  Flagged: ${report.flaggedFunctionCount}`,
+  ];
+  return lines.join('\n');
+}
+
+function buildFunctionTooltip(fn: FunctionQualityReport): string {
+  const lines = [
+    `${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
+  ];
+
+  if (fn.flags.length === 0) {
+    lines.push('', 'No issues found.');
+  } else {
+    lines.push('');
+    for (const flag of fn.flags) {
+      lines.push(`- ${flag.message}`);
+      lines.push(`  ${flag.suggestion}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
+
+export function registerCodeLensProvider(context: vscode.ExtensionContext): void {
+  const provider = new QualitasCodeLensProvider();
+  codeLensProvider = vscode.languages.registerCodeLensProvider({ scheme: 'file' }, provider);
+  context.subscriptions.push(codeLensProvider, onDidChangeCodeLensesEmitter);
 }
 
 export function updateDecorations(
   editor: vscode.TextEditor,
   report: FileQualityReport,
 ): void {
-  const types = getDecorationTypes();
-  const byGrade = new Map<Grade, vscode.DecorationOptions[]>();
-  for (const grade of ['A', 'B', 'C', 'D', 'F'] as Grade[]) {
-    byGrade.set(grade, []);
-  }
-
-  const addDecoration = (fn: FunctionQualityReport) => {
-    const line = fn.location.startLine - 1;
-    const range = new vscode.Range(line, 0, line, Number.MAX_SAFE_INTEGER);
-    byGrade.get(fn.grade)!.push({
-      range,
-      renderOptions: {
-        after: {
-          contentText: `  * ${fn.grade} ${fn.score.toFixed(1)}`,
-        },
-      },
-    });
-  };
-
-  // File-scope score on line 1
-  const fileRange = new vscode.Range(0, 0, 0, Number.MAX_SAFE_INTEGER);
-  byGrade.get(report.grade)!.push({
-    range: fileRange,
-    renderOptions: {
-      after: {
-        contentText: `  * File: ${report.grade} ${report.score.toFixed(1)}`,
-      },
-    },
-  });
-
-  for (const fn of report.functions) addDecoration(fn);
-  for (const cls of report.classes) {
-    for (const method of cls.methods) addDecoration(method);
-  }
-
-  for (const [grade, decorations] of byGrade) {
-    editor.setDecorations(types.get(grade)!, decorations);
-  }
+  reportsByUri.set(editor.document.uri.toString(), report);
+  onDidChangeCodeLensesEmitter.fire();
 }
 
 export function clearDecorations(editor: vscode.TextEditor): void {
-  if (!decorationTypes) return;
-  for (const type of decorationTypes.values()) {
-    editor.setDecorations(type, []);
-  }
+  reportsByUri.delete(editor.document.uri.toString());
+  onDidChangeCodeLensesEmitter.fire();
 }
 
 export function disposeDecorations(): void {
-  if (!decorationTypes) return;
-  for (const type of decorationTypes.values()) {
-    type.dispose();
-  }
-  decorationTypes = null;
+  reportsByUri.clear();
+  codeLensProvider?.dispose();
+  codeLensProvider = null;
 }
