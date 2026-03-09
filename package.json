@@ -1,0 +1,102 @@
+{
+  "name": "qualitas-vscode",
+  "displayName": "Qualitas",
+  "description": "Real-time code quality scores, refactoring flags, and improvement suggestions inline — powered by qualitas",
+  "version": "0.1.0",
+  "publisher": "qualitas",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "code-quality",
+    "complexity",
+    "refactoring",
+    "metrics",
+    "static-analysis"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/An631/qualitas-vscode"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:javascript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "qualitas.analyzeFile",
+        "title": "Qualitas: Analyze Current File"
+      },
+      {
+        "command": "qualitas.analyzeWorkspace",
+        "title": "Qualitas: Analyze Workspace"
+      },
+      {
+        "command": "qualitas.showReport",
+        "title": "Qualitas: Show Report"
+      }
+    ],
+    "configuration": {
+      "title": "Qualitas",
+      "properties": {
+        "qualitas.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable Qualitas analysis"
+        },
+        "qualitas.analyzeOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run analysis when a file is saved"
+        },
+        "qualitas.analyzeOnChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run analysis as you type (debounced)"
+        },
+        "qualitas.changeDelay": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 200,
+          "description": "Debounce delay in milliseconds for on-change analysis"
+        },
+        "qualitas.showInlineScores": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline score badges next to function names"
+        },
+        "qualitas.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show file quality score in the status bar"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "lint": "tsc --noEmit",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "qualitas": "^0.1.8"
+  }
+}

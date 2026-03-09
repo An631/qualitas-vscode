@@ -1,0 +1,10 @@
+src/**
+test/**
+node_modules/**
+!node_modules/qualitas/**
+!node_modules/@qualitas/**
+.vscode/**
+.gitignore
+tsconfig.json
+esbuild.js
+*.map
