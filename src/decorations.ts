@@ -54,6 +54,17 @@ export function updateDecorations(
     });
   };
 
+  // File-scope score on line 1
+  const fileRange = new vscode.Range(0, 0, 0, Number.MAX_SAFE_INTEGER);
+  byGrade.get(report.grade)!.push({
+    range: fileRange,
+    renderOptions: {
+      after: {
+        contentText: `  * File: ${report.grade} ${report.score.toFixed(1)}`,
+      },
+    },
+  });
+
   for (const fn of report.functions) addDecoration(fn);
   for (const cls of report.classes) {
     for (const method of cls.methods) addDecoration(method);
