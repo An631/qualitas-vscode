@@ -15,42 +15,50 @@ class QualitasCodeLensProvider implements vscode.CodeLensProvider {
     if (!report) return [];
 
     const lenses: vscode.CodeLens[] = [];
-
-    // File score on line 1
-    lenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: `Score ${report.grade}: ${report.score.toFixed(1)}`,
-        command: 'qualitas.showReport',
-        tooltip: buildFileTooltip(report),
-      }),
-    );
-
-    const addLens = (fn: FunctionQualityReport) => {
-      const line = fn.location.startLine - 1;
-      lenses.push(
-        new vscode.CodeLens(new vscode.Range(line, 0, line, 0), {
-          title: `Score ${fn.grade}: ${fn.score.toFixed(1)}`,
-          command: 'qualitas.showReport',
-          tooltip: buildFunctionTooltip(fn),
-        }),
-      );
-    };
-
-    for (const fn of report.functions) addLens(fn);
-    for (const cls of report.classes) {
-      // Class-level lens
-      const clsLine = cls.location.startLine - 1;
-      lenses.push(
-        new vscode.CodeLens(new vscode.Range(clsLine, 0, clsLine, 0), {
-          title: `Score ${cls.grade}: ${cls.score.toFixed(1)}`,
-          command: 'qualitas.showReport',
-          tooltip: `Class ${cls.name} - quality score ${cls.grade} ${cls.score.toFixed(1)}`,
-        }),
-      );
-      for (const method of cls.methods) addLens(method);
-    }
+    lenses.push(this.createFileScoreLens(report));
+    this.addFunctionLenses(lenses, report.functions);
+    this.addClassLenses(lenses, report.classes);
 
     return lenses;
+  }
+
+  private createFileScoreLens(report: FileQualityReport): vscode.CodeLens {
+    return new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+      title: `Score ${report.grade}: ${report.score.toFixed(1)}`,
+      command: 'qualitas.showReport',
+      tooltip: buildFileTooltip(report),
+    });
+  }
+
+  private addFunctionLenses(lenses: vscode.CodeLens[], functions: FunctionQualityReport[]): void {
+    for (const fn of functions) {
+      lenses.push(this.createFunctionScoreLens(fn));
+    }
+  }
+
+  private createFunctionScoreLens(fn: FunctionQualityReport): vscode.CodeLens {
+    const line = fn.location.startLine - 1;
+    return new vscode.CodeLens(new vscode.Range(line, 0, line, 0), {
+      title: `Score ${fn.grade}: ${fn.score.toFixed(1)}`,
+      command: 'qualitas.showReport',
+      tooltip: buildFunctionTooltip(fn),
+    });
+  }
+
+  private addClassLenses(lenses: vscode.CodeLens[], classes: any[]): void {
+    for (const cls of classes) {
+      lenses.push(this.createClassScoreLens(cls));
+      this.addFunctionLenses(lenses, cls.methods);
+    }
+  }
+
+  private createClassScoreLens(cls: any): vscode.CodeLens {
+    const clsLine = cls.location.startLine - 1;
+    return new vscode.CodeLens(new vscode.Range(clsLine, 0, clsLine, 0), {
+      title: `Score ${cls.grade}: ${cls.score.toFixed(1)}`,
+      command: 'qualitas.showReport',
+      tooltip: `Class ${cls.name} - quality score ${cls.grade} ${cls.score.toFixed(1)}`,
+    });
   }
 }
 
