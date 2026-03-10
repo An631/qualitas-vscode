@@ -208,13 +208,13 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "qualitas": "^0.1.8"
+    "qualitas": "^0.2.2"
   },
   "optionalDependencies": {
-    "@qualitas/binding-darwin-arm64": "^0.1.0",
-    "@qualitas/binding-darwin-x64": "^0.1.0",
-    "@qualitas/binding-linux-arm64-gnu": "^0.1.0",
-    "@qualitas/binding-linux-x64-gnu": "^0.1.0",
-    "@qualitas/binding-win32-x64-msvc": "^0.1.0"
+    "@qualitas/binding-darwin-arm64": "^0.2.2",
+    "@qualitas/binding-darwin-x64": "^0.2.2",
+    "@qualitas/binding-linux-arm64-gnu": "^0.2.2",
+    "@qualitas/binding-linux-x64-gnu": "^0.2.2",
+    "@qualitas/binding-win32-x64-msvc": "^0.2.2"
   }
 }

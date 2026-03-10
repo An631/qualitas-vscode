@@ -43,7 +43,7 @@ function complex(a: any, b: any, c: any, d: any, e: any, f: any) {
   });
 
   it('throws for unsupported file types', () => {
-    expect(() => analyzeDocument('content', 'file.py')).toThrow('Unsupported file type');
+    expect(() => analyzeDocument('content', 'file.xyz')).toThrow('Unsupported file type');
   });
 
   it('handles empty source', () => {
