@@ -73,6 +73,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install all platform bindings
+        run: |
+          npm install --no-save \
+            @qualitas/binding-darwin-arm64 \
+            @qualitas/binding-darwin-x64 \
+            @qualitas/binding-linux-arm64-gnu \
+            @qualitas/binding-linux-x64-gnu \
+            @qualitas/binding-win32-x64-msvc
+
       - name: Verify (lint + test + quality)
         run: npm run verify
 
