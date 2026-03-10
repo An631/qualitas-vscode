@@ -75,12 +75,23 @@ jobs:
 
       - name: Install all platform bindings
         run: |
-          npm install --no-save --force \
-            @qualitas/binding-darwin-arm64 \
-            @qualitas/binding-darwin-x64 \
-            @qualitas/binding-linux-arm64-gnu \
-            @qualitas/binding-linux-x64-gnu \
-            @qualitas/binding-win32-x64-msvc
+          BINDINGS=(
+            "@qualitas/binding-darwin-arm64"
+            "@qualitas/binding-darwin-x64"
+            "@qualitas/binding-linux-arm64-gnu"
+            "@qualitas/binding-linux-x64-gnu"
+            "@qualitas/binding-win32-x64-msvc"
+          )
+          for pkg in "${BINDINGS[@]}"; do
+            echo "Fetching $pkg..."
+            tarball=$(npm pack "$pkg" 2>/dev/null)
+            pkg_dir="node_modules/${pkg}"
+            mkdir -p "$pkg_dir"
+            tar xzf "$tarball" --strip-components=1 -C "$pkg_dir"
+            rm -f "$tarball"
+            echo "Installed $pkg -> $pkg_dir"
+            ls -la "$pkg_dir"
+          done
 
       - name: Verify (lint + test + quality)
         run: npm run verify
