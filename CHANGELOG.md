@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.7
+
+### Patch Changes
+
+- [`bd67f30`](https://github.com/An631/qualitas-vscode/commit/bd67f30683adb905455e0db0b22435590d227392) - Testing build.tml pipeline.
+
 ## 0.1.6
 
 ### Patch Changes
