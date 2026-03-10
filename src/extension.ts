@@ -248,7 +248,9 @@ function analyzeAndLogDocument(doc: vscode.TextDocument, cfg: ReturnType<typeof 
   outputChannel.appendLine(`[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`);
   const report = analyzeDocument(doc.getText(), doc.fileName, cfg.analysisOptions);
   outputChannel.appendLine(
-    `[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount} flags=${report.flaggedFunctionCount}`,
+    `[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount}` +
+      ` flags=${report.flaggedFunctionCount + (report.fileScope?.flags.length ?? 0)}` +
+      (report.fileScope ? ` fileScope=${report.fileScope.score.toFixed(1)}(${report.fileScope.grade})` : ''),
   );
   return report;
 }

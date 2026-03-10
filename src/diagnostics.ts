@@ -33,10 +33,58 @@ function addFileScopeDiagnostic(
   report: FileQualityReport,
   options: DiagnosticsOptions,
 ): void {
-  if (report.fileScope) {
-    const d = buildFunctionDiagnostic(report.fileScope, options);
-    if (d) diagnostics.push(d);
+  if (!report.fileScope) return;
+  const fn = report.fileScope;
+  const scoreThreshold = options.scoreThreshold ?? 65;
+  const hasFlags = fn.flags.length > 0;
+  const belowThreshold = fn.score < scoreThreshold;
+  if (!hasFlags && !belowThreshold) return;
+
+  const range = buildFileScopeRange(options.document);
+  const lines = buildFileScopeDiagnosticLines(fn, scoreThreshold, hasFlags, belowThreshold);
+  const severity = determineFileScopeSeverity(fn);
+
+  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  diag.source = DIAGNOSTIC_SOURCE;
+  diagnostics.push(diag);
+}
+
+function buildFileScopeRange(document?: vscode.TextDocument): vscode.Range {
+  // Place before the first character so the squiggle sits left of the code
+  return new vscode.Range(
+    new vscode.Position(0, 0),
+    new vscode.Position(0, 1),
+  );
+}
+
+function buildFileScopeDiagnosticLines(
+  fn: FunctionQualityReport,
+  scoreThreshold: number,
+  hasFlags: boolean,
+  belowThreshold: boolean,
+): string[] {
+  const lines: string[] = [];
+  lines.push(`File scope (code outside functions and classes) scored ${fn.grade} (${fn.score.toFixed(1)}/100)`);
+
+  if (belowThreshold) {
+    lines.push('');
+    lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
+
+  if (hasFlags) {
+    lines.push('');
+    for (const flag of fn.flags) {
+      lines.push(`- ${flag.message}`);
+      lines.push(`  ${flag.suggestion}`);
+    }
+  }
+
+  return lines;
+}
+
+function determineFileScopeSeverity(fn: FunctionQualityReport): vscode.DiagnosticSeverity {
+  const hasErrorFlag = fn.flags.some((f) => f.severity === 'error');
+  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
 }
 
 function addFunctionDiagnostics(
