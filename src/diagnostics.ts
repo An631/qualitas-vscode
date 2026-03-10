@@ -40,7 +40,7 @@ function addFileScopeDiagnostic(
   const belowThreshold = fn.score < scoreThreshold;
   if (!hasFlags && !belowThreshold) return;
 
-  const range = buildFileScopeRange(options.document);
+  const range = buildFileScopeRange();
   const lines = buildFileScopeDiagnosticLines(fn, scoreThreshold, hasFlags, belowThreshold);
   const severity = determineFileScopeSeverity(fn);
 
@@ -49,7 +49,7 @@ function addFileScopeDiagnostic(
   diagnostics.push(diag);
 }
 
-function buildFileScopeRange(document?: vscode.TextDocument): vscode.Range {
+function buildFileScopeRange(): vscode.Range {
   // Place before the first character so the squiggle sits left of the code
   return new vscode.Range(
     new vscode.Position(0, 0),

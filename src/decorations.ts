@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { FileQualityReport, Grade, FunctionQualityReport } from 'qualitas';
+import type { ClassQualityReport, FileQualityReport, FunctionQualityReport } from 'qualitas';
 
 // ── CodeLens provider ────────────────────────────────────────────────────────
 
@@ -45,14 +45,14 @@ class QualitasCodeLensProvider implements vscode.CodeLensProvider {
     });
   }
 
-  private addClassLenses(lenses: vscode.CodeLens[], classes: any[]): void {
+  private addClassLenses(lenses: vscode.CodeLens[], classes: ClassQualityReport[]): void {
     for (const cls of classes) {
       lenses.push(this.createClassScoreLens(cls));
       this.addFunctionLenses(lenses, cls.methods);
     }
   }
 
-  private createClassScoreLens(cls: any): vscode.CodeLens {
+  private createClassScoreLens(cls: ClassQualityReport): vscode.CodeLens {
     const clsLine = cls.location.startLine - 1;
     return new vscode.CodeLens(new vscode.Range(clsLine, 0, clsLine, 0), {
       title: `Score ${cls.grade}: ${cls.score.toFixed(1)}`,
