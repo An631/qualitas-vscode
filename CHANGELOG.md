@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.9
+
+### Patch Changes
+
+- [`4df2424`](https://github.com/An631/qualitas-vscode/commit/4df2424c12148739b2eaeca72311704bf95aad19) - Adding eslint support and binaries to vsix release
+
 ## 0.1.8
 
 ### Patch Changes
