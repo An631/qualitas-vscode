@@ -186,7 +186,7 @@
     "quality:summary": "qualitas ./ -f summary",
     "quality:flagged": "qualitas ./ -f flagged",
     "watch": "node esbuild.js --watch",
-    "package": "vsce package --allow-missing-repository --no-dependencies",
+    "package": "vsce package --allow-missing-repository",
     "publish": "vsce publish",
     "changeset": "changeset",
     "changeset:check": "changeset status --since=origin/main",
@@ -209,5 +209,12 @@
   },
   "dependencies": {
     "qualitas": "^0.1.8"
+  },
+  "optionalDependencies": {
+    "@qualitas/binding-darwin-arm64": "^0.1.0",
+    "@qualitas/binding-darwin-x64": "^0.1.0",
+    "@qualitas/binding-linux-arm64-gnu": "^0.1.0",
+    "@qualitas/binding-linux-x64-gnu": "^0.1.0",
+    "@qualitas/binding-win32-x64-msvc": "^0.1.0"
   }
 }
