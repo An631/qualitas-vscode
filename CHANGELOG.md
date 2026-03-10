@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.11
+
+### Patch Changes
+
+- [`d449c0f`](https://github.com/An631/qualitas-vscode/commit/d449c0fc61dd34d5cb6a15d7b818017bdbf7659c) - Adding a skip to allow for bundling other platform binaries into the vsix package
+
 ## 0.1.10
 
 ### Patch Changes
