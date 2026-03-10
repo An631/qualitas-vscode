@@ -90,7 +90,12 @@
         "qualitas.profile": {
           "type": "string",
           "default": "default",
-          "enum": ["default", "cc-focused", "data-focused", "strict"],
+          "enum": [
+            "default",
+            "cc-focused",
+            "data-focused",
+            "strict"
+          ],
           "enumDescriptions": [
             "Balanced weights across all 5 quality pillars",
             "Emphasizes cognitive flow complexity",
@@ -108,11 +113,26 @@
           "type": "object",
           "default": {},
           "properties": {
-            "cognitiveFlow": { "type": "number", "description": "Weight for cognitive flow complexity (CFC)" },
-            "dataComplexity": { "type": "number", "description": "Weight for data complexity (Halstead)" },
-            "identifierReference": { "type": "number", "description": "Weight for identifier reference complexity (IRC)" },
-            "dependencyCoupling": { "type": "number", "description": "Weight for dependency coupling (DC)" },
-            "structural": { "type": "number", "description": "Weight for structural metrics (LOC, params, nesting)" }
+            "cognitiveFlow": {
+              "type": "number",
+              "description": "Weight for cognitive flow complexity (CFC)"
+            },
+            "dataComplexity": {
+              "type": "number",
+              "description": "Weight for data complexity (Halstead)"
+            },
+            "identifierReference": {
+              "type": "number",
+              "description": "Weight for identifier reference complexity (IRC)"
+            },
+            "dependencyCoupling": {
+              "type": "number",
+              "description": "Weight for dependency coupling (DC)"
+            },
+            "structural": {
+              "type": "number",
+              "description": "Weight for structural metrics (LOC, params, nesting)"
+            }
           },
           "additionalProperties": false,
           "description": "Custom weights for the 5 quality pillars. Overrides the selected profile. Values should sum to 1.0."
@@ -123,14 +143,23 @@
           "description": "Override flag thresholds per metric. Set to false to disable a flag, or {\"warn\": N, \"error\": M} to customize thresholds. Keys: HIGH_COGNITIVE_FLOW, HIGH_DATA_COMPLEXITY, HIGH_IDENTIFIER_CHURN, TOO_MANY_PARAMS, TOO_LONG, DEEP_NESTING, HIGH_COUPLING, EXCESSIVE_RETURNS, HIGH_HALSTEAD_EFFORT.",
           "additionalProperties": {
             "oneOf": [
-              { "type": "boolean" },
+              {
+                "type": "boolean"
+              },
               {
                 "type": "object",
                 "properties": {
-                  "warn": { "type": "number" },
-                  "error": { "type": "number" }
+                  "warn": {
+                    "type": "number"
+                  },
+                  "error": {
+                    "type": "number"
+                  }
                 },
-                "required": ["warn", "error"]
+                "required": [
+                  "warn",
+                  "error"
+                ]
               }
             ]
           }
@@ -142,16 +171,21 @@
     "vscode:prepublish": "npm run compile",
     "compile": "node esbuild.js --production",
     "test": "jest",
-    "verify": "npm run lint && npm run test && npm run quality",
+    "verify": "npm run lint && npm run test && npm run quality && npm run changeset:check",
     "lint": "tsc --noEmit",
     "quality": "qualitas ./ -f detail",
     "quality:summary": "qualitas ./ -f summary",
     "quality:flagged": "qualitas ./ -f flagged",
     "watch": "node esbuild.js --watch",
     "package": "vsce package --allow-missing-repository",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "changeset": "changeset",
+    "changeset:check": "changeset status --since=origin/main",
+    "version:bump": "changeset version"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.85.0",
