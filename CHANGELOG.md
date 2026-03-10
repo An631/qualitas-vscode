@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.8
+
+### Patch Changes
+
+- [#3](https://github.com/An631/qualitas-vscode/pull/3) [`9398605`](https://github.com/An631/qualitas-vscode/commit/9398605175117aca24f77258177ecb973346a998) Thanks [@An631](https://github.com/An631)! - Moving to release yaml instead of build yml for releases.
+
 ## 0.1.7
 
 ### Patch Changes
