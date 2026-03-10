@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.12
+
+### Patch Changes
+
+- [`4b7ba9d`](https://github.com/An631/qualitas-vscode/commit/4b7ba9dd22d894765bdd6933329b5b87533e67c9) - Adding release documentation for publishing
+
 ## 0.1.11
 
 ### Patch Changes
