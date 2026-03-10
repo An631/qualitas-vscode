@@ -177,7 +177,7 @@
     "quality:summary": "qualitas ./ -f summary",
     "quality:flagged": "qualitas ./ -f flagged",
     "watch": "node esbuild.js --watch",
-    "package": "vsce package --allow-missing-repository",
+    "package": "vsce package --allow-missing-repository --no-dependencies",
     "publish": "vsce publish",
     "changeset": "changeset",
     "changeset:check": "changeset status --since=origin/main",
