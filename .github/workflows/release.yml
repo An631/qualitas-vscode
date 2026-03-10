@@ -75,7 +75,7 @@ jobs:
 
       - name: Install all platform bindings
         run: |
-          npm install --no-save \
+          npm install --no-save --force \
             @qualitas/binding-darwin-arm64 \
             @qualitas/binding-darwin-x64 \
             @qualitas/binding-linux-arm64-gnu \
