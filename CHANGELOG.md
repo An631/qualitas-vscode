@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.13
+
+### Patch Changes
+
+- [`97f1b55`](https://github.com/An631/qualitas-vscode/commit/97f1b55b3159920161b8dbbdc11d2d1d6caac5d5) - Forcing the addition of all platform packages into the vsix using manual npm commands to workaround platform specific limitations.
+
 ## 0.1.12
 
 ### Patch Changes
