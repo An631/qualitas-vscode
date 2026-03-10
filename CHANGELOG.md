@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.10
+
+### Patch Changes
+
+- [`0c3d839`](https://github.com/An631/qualitas-vscode/commit/0c3d839e2187402c13c0ab25d824388246d8d5bb) - Adding force install for platform binaries from other platforms during release
+
 ## 0.1.9
 
 ### Patch Changes
