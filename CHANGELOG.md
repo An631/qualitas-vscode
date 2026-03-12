@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.16
+
+### Patch Changes
+
+- [`4ff598c`](https://github.com/An631/qualitas-vscode/commit/4ff598cce48842ff4ef31735a84fce3d590d99b1) - Improving configuration setup in the extension and interaction with the qualitas.config.js file. Enabling prettier for format control
+
 ## 0.1.15
 
 ### Patch Changes
