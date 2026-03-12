@@ -38,24 +38,25 @@ function addFileScopeDiagnostic(
   options: DiagnosticsOptions,
 ): void {
   if (!report.fileScope) return;
-  const fn = report.fileScope;
-  const scoreThreshold = options.scoreThreshold ?? 65;
-  const hasFlags = fn.flags.length > 0;
-  const belowThreshold = fn.score < scoreThreshold;
-  if (!hasFlags && !belowThreshold) return;
+  const diag = buildFileScopeDiagnostic(report.fileScope, options);
+  if (diag) diagnostics.push(diag);
+}
 
-  const range = buildFileScopeRange();
-  const lines = buildFileScopeDiagnosticLines(
-    fn,
-    scoreThreshold,
-    hasFlags,
-    belowThreshold,
+function buildFileScopeDiagnostic(
+  fn: FunctionQualityReport,
+  options: DiagnosticsOptions,
+): vscode.Diagnostic | null {
+  const threshold = options.scoreThreshold ?? 65;
+  if (fn.flags.length === 0 && fn.score >= threshold) return null;
+
+  const lines = buildFileScopeDiagnosticLines(fn, threshold);
+  const diag = new vscode.Diagnostic(
+    buildFileScopeRange(),
+    lines.join("\n"),
+    determineFileScopeSeverity(fn),
   );
-  const severity = determineFileScopeSeverity(fn);
-
-  const diag = new vscode.Diagnostic(range, lines.join("\n"), severity);
   diag.source = DIAGNOSTIC_SOURCE;
-  diagnostics.push(diag);
+  return diag;
 }
 
 function buildFileScopeRange(): vscode.Range {
@@ -65,26 +66,22 @@ function buildFileScopeRange(): vscode.Range {
 
 function buildFileScopeDiagnosticLines(
   fn: FunctionQualityReport,
-  scoreThreshold: number,
-  hasFlags: boolean,
-  belowThreshold: boolean,
+  threshold: number,
 ): string[] {
   const lines: string[] = [];
   lines.push(
     `File scope (code outside functions and classes) scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
   );
 
-  if (belowThreshold) {
+  if (fn.score < threshold) {
     lines.push("");
-    lines.push(`Score is below the threshold of ${scoreThreshold}.`);
+    lines.push(`Score is below the threshold of ${threshold}.`);
   }
 
-  if (hasFlags) {
+  for (const flag of fn.flags) {
     lines.push("");
-    for (const flag of fn.flags) {
-      lines.push(`- ${flag.message}`);
-      lines.push(`  ${flag.suggestion}`);
-    }
+    lines.push(`- ${flag.message}`);
+    lines.push(`  ${flag.suggestion}`);
   }
 
   return lines;
