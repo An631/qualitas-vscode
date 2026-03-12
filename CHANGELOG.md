@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.14
+
+### Patch Changes
+
+- [`927f751`](https://github.com/An631/qualitas-vscode/commit/927f751d5f46599dc2deade682a741d8945ce113) - Updating to latest qualitas version with python support.
+
 ## 0.1.13
 
 ### Patch Changes
