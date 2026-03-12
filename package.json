@@ -113,7 +113,7 @@
     "watch": "node esbuild.js --watch",
     "package": "vsce package --allow-missing-repository",
     "publish": "vsce publish",
-    "changeset": "changeset",
+    "changeset": "changeset && git add .changeset/* && git commit .changeset/*.md -m \"Added changeset file\"",
     "changeset:check": "changeset status --since=origin/main",
     "version:bump": "bash scripts/version.sh"
   },
