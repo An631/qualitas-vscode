@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.15
+
+### Patch Changes
+
+- [`0ca075f`](https://github.com/An631/qualitas-vscode/commit/0ca075fe2e63c0cfd2d56f8157e4627cd39b71d0) - Improving the tooltip from annotations
+
 ## 0.1.14
 
 ### Patch Changes
