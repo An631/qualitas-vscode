@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/An631/qualitas-vscode"
+    "url": "git+https://github.com/An631/qualitas-vscode.git"
   },
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -94,84 +94,7 @@
           "default": 65,
           "minimum": 0,
           "maximum": 100,
-          "description": "Minimum acceptable quality score (0-100). Functions and classes scoring below this are flagged."
-        },
-        "qualitas.profile": {
-          "type": "string",
-          "default": "default",
-          "enum": [
-            "default",
-            "cc-focused",
-            "data-focused",
-            "strict"
-          ],
-          "enumDescriptions": [
-            "Balanced weights across all 5 quality pillars",
-            "Emphasizes cognitive flow complexity",
-            "Emphasizes data complexity (Halstead metrics)",
-            "Tighter thresholds across all metrics"
-          ],
-          "description": "Analysis profile that controls metric weights and thresholds."
-        },
-        "qualitas.includeTests": {
-          "type": "boolean",
-          "default": false,
-          "description": "Include test files in workspace analysis."
-        },
-        "qualitas.weights": {
-          "type": "object",
-          "default": {},
-          "properties": {
-            "cognitiveFlow": {
-              "type": "number",
-              "description": "Weight for cognitive flow complexity (CFC)"
-            },
-            "dataComplexity": {
-              "type": "number",
-              "description": "Weight for data complexity (Halstead)"
-            },
-            "identifierReference": {
-              "type": "number",
-              "description": "Weight for identifier reference complexity (IRC)"
-            },
-            "dependencyCoupling": {
-              "type": "number",
-              "description": "Weight for dependency coupling (DC)"
-            },
-            "structural": {
-              "type": "number",
-              "description": "Weight for structural metrics (LOC, params, nesting)"
-            }
-          },
-          "additionalProperties": false,
-          "description": "Custom weights for the 5 quality pillars. Overrides the selected profile. Values should sum to 1.0."
-        },
-        "qualitas.flagOverrides": {
-          "type": "object",
-          "default": {},
-          "description": "Override flag thresholds per metric. Set to false to disable a flag, or {\"warn\": N, \"error\": M} to customize thresholds. Keys: HIGH_COGNITIVE_FLOW, HIGH_DATA_COMPLEXITY, HIGH_IDENTIFIER_CHURN, TOO_MANY_PARAMS, TOO_LONG, DEEP_NESTING, HIGH_COUPLING, EXCESSIVE_RETURNS, HIGH_HALSTEAD_EFFORT.",
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "warn": {
-                    "type": "number"
-                  },
-                  "error": {
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "warn",
-                  "error"
-                ]
-              }
-            ]
-          }
+          "description": "Minimum quality score (0-100) for displaying squiggles. Functions and classes scoring below this are flagged in the editor. Analysis rules (profile, weights, flags) are configured in qualitas.config.js."
         }
       }
     }
@@ -180,8 +103,10 @@
     "vscode:prepublish": "npm run compile",
     "compile": "node esbuild.js --production",
     "test": "jest",
-    "verify": "npm run lint && npm run test && npm run quality",
+    "verify": "npm run lint && npm run test && npm run format:check && npm run quality",
     "lint": "tsc --noEmit && eslint src/ test/",
+    "format": "node scripts/format.js",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "quality": "qualitas ./ -f detail",
     "quality:summary": "qualitas ./ -f summary",
     "quality:flagged": "qualitas ./ -f flagged",
@@ -204,17 +129,18 @@
     "esbuild": "^0.25.0",
     "eslint": "^10.0.3",
     "jest": "^30.2.0",
+    "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "qualitas": "^0.2.2"
+    "qualitas": "^0.2.4"
   },
   "optionalDependencies": {
-    "@qualitas/binding-darwin-arm64": "^0.2.2",
-    "@qualitas/binding-darwin-x64": "^0.2.2",
-    "@qualitas/binding-linux-arm64-gnu": "^0.2.2",
-    "@qualitas/binding-linux-x64-gnu": "^0.2.2",
-    "@qualitas/binding-win32-x64-msvc": "^0.2.2"
+    "@qualitas/binding-darwin-arm64": "^0.2.4",
+    "@qualitas/binding-darwin-x64": "^0.2.4",
+    "@qualitas/binding-linux-arm64-gnu": "^0.2.4",
+    "@qualitas/binding-linux-x64-gnu": "^0.2.4",
+    "@qualitas/binding-win32-x64-msvc": "^0.2.4"
   }
 }

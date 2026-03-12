@@ -1,7 +1,11 @@
-import * as vscode from 'vscode';
-import type { ClassQualityReport, FileQualityReport, FunctionQualityReport } from 'qualitas';
+import * as vscode from "vscode";
+import type {
+  ClassQualityReport,
+  FileQualityReport,
+  FunctionQualityReport,
+} from "qualitas";
 
-const DIAGNOSTIC_SOURCE = 'qualitas';
+const DIAGNOSTIC_SOURCE = "qualitas";
 
 interface DiagnosticsOptions {
   scoreThreshold?: number;
@@ -41,20 +45,22 @@ function addFileScopeDiagnostic(
   if (!hasFlags && !belowThreshold) return;
 
   const range = buildFileScopeRange();
-  const lines = buildFileScopeDiagnosticLines(fn, scoreThreshold, hasFlags, belowThreshold);
+  const lines = buildFileScopeDiagnosticLines(
+    fn,
+    scoreThreshold,
+    hasFlags,
+    belowThreshold,
+  );
   const severity = determineFileScopeSeverity(fn);
 
-  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  const diag = new vscode.Diagnostic(range, lines.join("\n"), severity);
   diag.source = DIAGNOSTIC_SOURCE;
   diagnostics.push(diag);
 }
 
 function buildFileScopeRange(): vscode.Range {
   // Place before the first character so the squiggle sits left of the code
-  return new vscode.Range(
-    new vscode.Position(0, 0),
-    new vscode.Position(0, 1),
-  );
+  return new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
 }
 
 function buildFileScopeDiagnosticLines(
@@ -64,15 +70,17 @@ function buildFileScopeDiagnosticLines(
   belowThreshold: boolean,
 ): string[] {
   const lines: string[] = [];
-  lines.push(`File scope (code outside functions and classes) scored ${fn.grade} (${fn.score.toFixed(1)}/100)`);
+  lines.push(
+    `File scope (code outside functions and classes) scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
+  );
 
   if (belowThreshold) {
-    lines.push('');
+    lines.push("");
     lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
 
   if (hasFlags) {
-    lines.push('');
+    lines.push("");
     for (const flag of fn.flags) {
       lines.push(`- ${flag.message}`);
       lines.push(`  ${flag.suggestion}`);
@@ -82,9 +90,13 @@ function buildFileScopeDiagnosticLines(
   return lines;
 }
 
-function determineFileScopeSeverity(fn: FunctionQualityReport): vscode.DiagnosticSeverity {
-  const hasErrorFlag = fn.flags.some((f) => f.severity === 'error');
-  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
+function determineFileScopeSeverity(
+  fn: FunctionQualityReport,
+): vscode.DiagnosticSeverity {
+  const hasErrorFlag = fn.flags.some((f) => f.severity === "error");
+  return hasErrorFlag
+    ? vscode.DiagnosticSeverity.Warning
+    : vscode.DiagnosticSeverity.Information;
 }
 
 function addFunctionDiagnostics(
@@ -156,7 +168,7 @@ function buildFunctionDiagnostic(
   const lines = buildFunctionDiagnosticLines(fn, scoreThreshold, hasFlags);
   const severity = determineFunctionSeverity(fn);
 
-  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  const diag = new vscode.Diagnostic(range, lines.join("\n"), severity);
   diag.source = DIAGNOSTIC_SOURCE;
   return diag;
 }
@@ -170,12 +182,12 @@ function buildFunctionDiagnosticLines(
   lines.push(`${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`);
 
   if (fn.score < scoreThreshold) {
-    lines.push('');
+    lines.push("");
     lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
 
   if (hasFlags) {
-    lines.push('');
+    lines.push("");
     for (const flag of fn.flags) {
       lines.push(`- ${flag.message}`);
       lines.push(`  ${flag.suggestion}`);
@@ -185,9 +197,13 @@ function buildFunctionDiagnosticLines(
   return lines;
 }
 
-function determineFunctionSeverity(fn: FunctionQualityReport): vscode.DiagnosticSeverity {
-  const hasErrorFlag = fn.flags.some((f) => f.severity === 'error');
-  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
+function determineFunctionSeverity(
+  fn: FunctionQualityReport,
+): vscode.DiagnosticSeverity {
+  const hasErrorFlag = fn.flags.some((f) => f.severity === "error");
+  return hasErrorFlag
+    ? vscode.DiagnosticSeverity.Warning
+    : vscode.DiagnosticSeverity.Information;
 }
 
 function buildClassDiagnostic(
@@ -198,17 +214,22 @@ function buildClassDiagnostic(
   const flaggedMethods = cls.methods.filter(
     (m) => m.flags.length > 0 || m.score < scoreThreshold,
   );
-  
+
   if (!shouldCreateClassDiagnostic(cls, scoreThreshold, flaggedMethods)) {
     return null;
   }
 
   const line = cls.location.startLine - 1;
   const range = nameRange(cls.name, line, options.document);
-  const lines = buildClassDiagnosticLines(cls, scoreThreshold, cls.flags.length > 0, flaggedMethods);
+  const lines = buildClassDiagnosticLines(
+    cls,
+    scoreThreshold,
+    cls.flags.length > 0,
+    flaggedMethods,
+  );
   const severity = determineClassSeverity(cls);
 
-  const diag = new vscode.Diagnostic(range, lines.join('\n'), severity);
+  const diag = new vscode.Diagnostic(range, lines.join("\n"), severity);
   diag.source = DIAGNOSTIC_SOURCE;
   return diag;
 }
@@ -216,16 +237,20 @@ function buildClassDiagnostic(
 function shouldCreateClassDiagnostic(
   cls: ClassQualityReport,
   scoreThreshold: number,
-  flaggedMethods: ClassQualityReport['methods'],
+  flaggedMethods: ClassQualityReport["methods"],
 ): boolean {
-  return cls.flags.length > 0 || cls.score < scoreThreshold || flaggedMethods.length > 0;
+  return (
+    cls.flags.length > 0 ||
+    cls.score < scoreThreshold ||
+    flaggedMethods.length > 0
+  );
 }
 
 function buildClassDiagnosticLines(
   cls: ClassQualityReport,
   scoreThreshold: number,
   hasClassFlags: boolean,
-  flaggedMethods: ClassQualityReport['methods'],
+  flaggedMethods: ClassQualityReport["methods"],
 ): string[] {
   const lines: string[] = [];
   addClassHeaderLine(lines, cls);
@@ -236,19 +261,25 @@ function buildClassDiagnosticLines(
 }
 
 function addClassHeaderLine(lines: string[], cls: ClassQualityReport): void {
-  lines.push(`class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`);
+  lines.push(
+    `class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`,
+  );
 }
 
-function addScoreWarning(lines: string[], cls: ClassQualityReport, scoreThreshold: number): void {
+function addScoreWarning(
+  lines: string[],
+  cls: ClassQualityReport,
+  scoreThreshold: number,
+): void {
   if (cls.score < scoreThreshold) {
-    lines.push('');
+    lines.push("");
     lines.push(`Score is below the threshold of ${scoreThreshold}.`);
   }
 }
 
 function addClassFlags(lines: string[], cls: ClassQualityReport): void {
   if (cls.flags.length > 0) {
-    lines.push('');
+    lines.push("");
     for (const flag of cls.flags) {
       lines.push(`- ${flag.message}`);
       lines.push(`  ${flag.suggestion}`);
@@ -256,9 +287,12 @@ function addClassFlags(lines: string[], cls: ClassQualityReport): void {
   }
 }
 
-function addMethodSummary(lines: string[], flaggedMethods: ClassQualityReport['methods']): void {
+function addMethodSummary(
+  lines: string[],
+  flaggedMethods: ClassQualityReport["methods"],
+): void {
   if (flaggedMethods.length > 0) {
-    lines.push('');
+    lines.push("");
     lines.push(`${flaggedMethods.length} method(s) need attention:`);
     for (const m of flaggedMethods) {
       lines.push(`  ${m.name} scored ${m.grade} (${m.score.toFixed(1)}/100)`);
@@ -266,8 +300,12 @@ function addMethodSummary(lines: string[], flaggedMethods: ClassQualityReport['m
   }
 }
 
-function determineClassSeverity(cls: ClassQualityReport): vscode.DiagnosticSeverity {
+function determineClassSeverity(
+  cls: ClassQualityReport,
+): vscode.DiagnosticSeverity {
   const allFlags = [...cls.flags, ...cls.methods.flatMap((m) => m.flags)];
-  const hasErrorFlag = allFlags.some((f) => f.severity === 'error');
-  return hasErrorFlag ? vscode.DiagnosticSeverity.Warning : vscode.DiagnosticSeverity.Information;
+  const hasErrorFlag = allFlags.some((f) => f.severity === "error");
+  return hasErrorFlag
+    ? vscode.DiagnosticSeverity.Warning
+    : vscode.DiagnosticSeverity.Information;
 }

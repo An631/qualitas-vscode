@@ -1,9 +1,9 @@
-import { debounce } from '../src/debounce';
+import { debounce } from "../src/debounce";
 
 jest.useFakeTimers();
 
-describe('debounce', () => {
-  it('delays function execution', () => {
+describe("debounce", () => {
+  it("delays function execution", () => {
     const fn = jest.fn();
     const debounced = debounce(fn, 500);
 
@@ -14,7 +14,7 @@ describe('debounce', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it('resets timer on subsequent calls', () => {
+  it("resets timer on subsequent calls", () => {
     const fn = jest.fn();
     const debounced = debounce(fn, 500);
 
@@ -29,17 +29,17 @@ describe('debounce', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it('passes arguments to the debounced function', () => {
+  it("passes arguments to the debounced function", () => {
     const fn = jest.fn();
     const debounced = debounce(fn, 100);
 
-    debounced('a', 'b');
+    debounced("a", "b");
     jest.advanceTimersByTime(100);
 
-    expect(fn).toHaveBeenCalledWith('a', 'b');
+    expect(fn).toHaveBeenCalledWith("a", "b");
   });
 
-  it('cancel prevents execution', () => {
+  it("cancel prevents execution", () => {
     const fn = jest.fn();
     const debounced = debounce(fn, 500);
 
@@ -50,7 +50,7 @@ describe('debounce', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 
-  it('cancel is safe to call when no timer is pending', () => {
+  it("cancel is safe to call when no timer is pending", () => {
     const fn = jest.fn();
     const debounced = debounce(fn, 500);
 

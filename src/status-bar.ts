@@ -1,20 +1,23 @@
-import * as vscode from 'vscode';
-import type { FileQualityReport, Grade } from 'qualitas';
+import * as vscode from "vscode";
+import type { FileQualityReport, Grade } from "qualitas";
 
 const GRADE_ICONS: Record<Grade, string> = {
-  A: '$(pass)',
-  B: '$(info)',
-  C: '$(warning)',
-  D: '$(error)',
-  F: '$(error)',
+  A: "$(pass)",
+  B: "$(info)",
+  C: "$(warning)",
+  D: "$(error)",
+  F: "$(error)",
 };
 
 let statusBarItem: vscode.StatusBarItem | null = null;
 
 export function createStatusBarItem(): vscode.StatusBarItem {
-  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.command = 'qualitas.showReport';
-  statusBarItem.tooltip = 'Qualitas - file quality score';
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100,
+  );
+  statusBarItem.command = "qualitas.showReport";
+  statusBarItem.tooltip = "Qualitas - file quality score";
   statusBarItem.show();
   return statusBarItem;
 }
@@ -28,7 +31,7 @@ export function updateStatusBar(report: FileQualityReport): void {
 
 export function clearStatusBar(): void {
   if (!statusBarItem) return;
-  statusBarItem.text = '';
+  statusBarItem.text = "";
   statusBarItem.hide();
 }
 

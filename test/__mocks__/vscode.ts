@@ -21,7 +21,7 @@ export class Range {
     startChar?: number,
     endChar?: number,
   ) {
-    if (typeof start === 'number') {
+    if (typeof start === "number") {
       this.start = new Position(start, startChar ?? 0);
       this.end = new Position(end as number, endChar ?? 0);
     }
@@ -56,9 +56,9 @@ export const window = {
     dispose: jest.fn(),
   })),
   createStatusBarItem: jest.fn(() => ({
-    text: '',
-    tooltip: '',
-    command: '',
+    text: "",
+    tooltip: "",
+    command: "",
     show: jest.fn(),
     hide: jest.fn(),
     dispose: jest.fn(),

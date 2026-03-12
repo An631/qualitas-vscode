@@ -1,13 +1,28 @@
-import * as vscode from 'vscode';
-import { analyzeDocument, analyzeWorkspace } from './analyzer';
-import { getConfig } from './config';
-import { debounce } from './debounce';
-import { QualitasCodeActionProvider, registerAICommands } from './code-actions';
-import { clearDecorations, disposeDecorations, registerCodeLensProvider, updateDecorations } from './decorations';
-import { createDiagnosticCollection, updateDiagnostics } from './diagnostics';
-import { clearStatusBar, createStatusBarItem, disposeStatusBar, updateStatusBar } from './status-bar';
-import type { FileQualityReport, ProjectQualityReport } from 'qualitas';
-import { extname } from 'path';
+import * as vscode from "vscode";
+import { analyzeDocument, analyzeWorkspace } from "./analyzer";
+import {
+  getConfig,
+  loadProjectConfig,
+  getAnalysisOptions,
+  clearConfigCache,
+} from "./config";
+import { debounce } from "./debounce";
+import { QualitasCodeActionProvider, registerAICommands } from "./code-actions";
+import {
+  clearDecorations,
+  disposeDecorations,
+  registerCodeLensProvider,
+  updateDecorations,
+} from "./decorations";
+import { createDiagnosticCollection, updateDiagnostics } from "./diagnostics";
+import {
+  clearStatusBar,
+  createStatusBarItem,
+  disposeStatusBar,
+  updateStatusBar,
+} from "./status-bar";
+import type { FileQualityReport, ProjectQualityReport } from "qualitas";
+import { extname } from "path";
 
 // Cache extensions that qualitas doesn't support, so we don't retry them
 const unsupportedExtensions = new Set<string>();
@@ -30,8 +45,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
 function activateInternal(context: vscode.ExtensionContext): void {
   diagnosticCollection = createDiagnosticCollection();
-  outputChannel = vscode.window.createOutputChannel('Qualitas');
-  outputChannel.appendLine('[qualitas] Extension activating...');
+  outputChannel = vscode.window.createOutputChannel("Qualitas");
+  outputChannel.appendLine("[qualitas] Extension activating...");
   const statusBar = createStatusBarItem();
   registerCodeLensProvider(context);
   registerAICommands(context, {
@@ -41,9 +56,14 @@ function activateInternal(context: vscode.ExtensionContext): void {
 
   // Register code action provider for all file types
   context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider({ scheme: 'file' }, new QualitasCodeActionProvider(), {
-      providedCodeActionKinds: QualitasCodeActionProvider.providedCodeActionKinds,
-    }),
+    vscode.languages.registerCodeActionsProvider(
+      { scheme: "file" },
+      new QualitasCodeActionProvider(),
+      {
+        providedCodeActionKinds:
+          QualitasCodeActionProvider.providedCodeActionKinds,
+      },
+    ),
   );
 
   const config = getConfig();
@@ -53,19 +73,26 @@ function activateInternal(context: vscode.ExtensionContext): void {
 
   registerEventHandlers(context, debouncedAnalyze);
   registerCommands(context);
-  
+
   context.subscriptions.push(diagnosticCollection, outputChannel, statusBar);
 
   // Analyze the currently active editor on activation
   const activeEditor = vscode.window.activeTextEditor;
-  outputChannel.appendLine(`[qualitas] Activated. Active editor: ${activeEditor?.document.fileName ?? 'none'}, language: ${activeEditor?.document.languageId ?? 'n/a'}`);
+  outputChannel.appendLine(
+    `[qualitas] Activated. Active editor: ${activeEditor?.document.fileName ?? "none"}, language: ${activeEditor?.document.languageId ?? "n/a"}`,
+  );
   if (activeEditor && isSupported(activeEditor.document)) {
-    outputChannel.appendLine(`[qualitas] Running initial analysis on ${activeEditor.document.fileName}`);
+    outputChannel.appendLine(
+      `[qualitas] Running initial analysis on ${activeEditor.document.fileName}`,
+    );
     runAnalysis(activeEditor);
   }
 }
 
-function registerEventHandlers(context: vscode.ExtensionContext, debouncedAnalyze: ReturnType<typeof createDebouncedAnalyze>): void {
+function registerEventHandlers(
+  context: vscode.ExtensionContext,
+  debouncedAnalyze: ReturnType<typeof createDebouncedAnalyze>,
+): void {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       handleActiveEditorChange(editor);
@@ -110,7 +137,9 @@ function handleActiveEditorChange(editor: vscode.TextEditor | undefined): void {
 function handleDocumentSave(doc: vscode.TextDocument): void {
   const cfg = getConfig();
   if (!cfg.enable || !cfg.analyzeOnSave) return;
-  const editor = vscode.window.visibleTextEditors.find((e) => e.document === doc);
+  const editor = vscode.window.visibleTextEditors.find(
+    (e) => e.document === doc,
+  );
   if (editor && isSupported(doc)) {
     runAnalysis(editor);
   }
@@ -122,7 +151,9 @@ function handleDocumentChange(
 ): void {
   const cfg = getConfig();
   if (!cfg.enable || !cfg.analyzeOnChange) return;
-  const editor = vscode.window.visibleTextEditors.find((ed) => ed.document === e.document);
+  const editor = vscode.window.visibleTextEditors.find(
+    (ed) => ed.document === e.document,
+  );
   if (editor && isSupported(e.document)) {
     debouncedAnalyze(editor);
   }
@@ -133,7 +164,8 @@ function handleConfigChange(
   context: vscode.ExtensionContext,
   debouncedAnalyze: ReturnType<typeof createDebouncedAnalyze>,
 ): void {
-  if (!e.affectsConfiguration('qualitas')) return;
+  if (!e.affectsConfiguration("qualitas")) return;
+  clearConfigCache();
   const cfg = getConfig();
   debouncedAnalyze.cancel();
   debouncedAnalyze = createDebouncedAnalyze(cfg.changeDelay);
@@ -146,23 +178,22 @@ function handleConfigChange(
 
 function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('qualitas.analyzeFile', () => {
+    vscode.commands.registerCommand("qualitas.analyzeFile", () => {
       handleAnalyzeFileCommand();
     }),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('qualitas.analyzeFolder', async () => {
+    vscode.commands.registerCommand("qualitas.analyzeFolder", async () => {
       await handleAnalyzeFolderCommand();
     }),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('qualitas.showReport', () => {
+    vscode.commands.registerCommand("qualitas.showReport", () => {
       handleShowReportCommand();
     }),
   );
-
 }
 
 function handleAnalyzeFileCommand(): void {
@@ -170,7 +201,9 @@ function handleAnalyzeFileCommand(): void {
   if (editor && isSupported(editor.document)) {
     runAnalysis(editor);
   } else {
-    vscode.window.showInformationMessage('Qualitas: Open a supported source file to analyze.');
+    vscode.window.showInformationMessage(
+      "Qualitas: Open a supported source file to analyze.",
+    );
   }
 }
 
@@ -179,7 +212,7 @@ async function handleAnalyzeFolderCommand(): Promise<void> {
     canSelectFiles: false,
     canSelectFolders: true,
     canSelectMany: false,
-    openLabel: 'Analyze Folder',
+    openLabel: "Analyze Folder",
     defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri,
   });
 
@@ -195,12 +228,15 @@ async function handleAnalyzeFolderCommand(): Promise<void> {
     },
     async () => {
       try {
-        const cfg = getConfig();
-        const report = await analyzeWorkspace(folderPath, cfg.analysisOptions);
+        const projectConfig = loadProjectConfig();
+        const analysisOptions = getAnalysisOptions(projectConfig);
+        const report = await analyzeWorkspace(folderPath, analysisOptions);
         showProjectReport(report);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(`Qualitas: Folder analysis failed - ${msg}`);
+        vscode.window.showErrorMessage(
+          `Qualitas: Folder analysis failed - ${msg}`,
+        );
       }
     },
   );
@@ -211,7 +247,9 @@ function handleShowReportCommand(): void {
   if (!editor) return;
   const report = reportCache.get(editor.document.uri.toString());
   if (!report) {
-    vscode.window.showInformationMessage('Qualitas: No report available. Analyze the file first.');
+    vscode.window.showInformationMessage(
+      "Qualitas: No report available. Analyze the file first.",
+    );
     return;
   }
   showReport(report);
@@ -227,7 +265,7 @@ function isSupported(doc: vscode.TextDocument): boolean {
   const ext = extname(doc.fileName).toLowerCase();
   if (!ext || unsupportedExtensions.has(ext)) return false;
   // Skip untitled/virtual documents with no real file extension
-  if (doc.uri.scheme !== 'file') return false;
+  if (doc.uri.scheme !== "file") return false;
   return true;
 }
 
@@ -241,7 +279,7 @@ function runAnalysis(editor: vscode.TextEditor): void {
 
   const doc = editor.document;
   try {
-    const report = analyzeAndLogDocument(doc, cfg);
+    const report = analyzeAndLogDocument(doc);
     reportCache.set(doc.uri.toString(), report);
 
     updateEditorState(editor, report, cfg);
@@ -250,19 +288,37 @@ function runAnalysis(editor: vscode.TextEditor): void {
   }
 }
 
-function analyzeAndLogDocument(doc: vscode.TextDocument, cfg: ReturnType<typeof getConfig>): FileQualityReport {
-  outputChannel.appendLine(`[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`);
-  const report = analyzeDocument(doc.getText(), doc.fileName, cfg.analysisOptions);
+function analyzeAndLogDocument(doc: vscode.TextDocument): FileQualityReport {
+  outputChannel.appendLine(
+    `[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`,
+  );
+  const projectConfig = loadProjectConfig();
+  const analysisOptions = getAnalysisOptions(projectConfig);
+  const report = analyzeDocument(
+    doc.getText(),
+    doc.fileName,
+    analysisOptions,
+    projectConfig,
+  );
   outputChannel.appendLine(
     `[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount}` +
       ` flags=${report.flaggedFunctionCount + (report.fileScope?.flags.length ?? 0)}` +
-      (report.fileScope ? ` fileScope=${report.fileScope.score.toFixed(1)}(${report.fileScope.grade})` : ''),
+      (report.fileScope
+        ? ` fileScope=${report.fileScope.score.toFixed(1)}(${report.fileScope.grade})`
+        : ""),
   );
   return report;
 }
 
-function updateEditorState(editor: vscode.TextEditor, report: FileQualityReport, cfg: ReturnType<typeof getConfig>): void {
-  const options = {document: editor.document, scoreThreshold: cfg.scoreThreshold};
+function updateEditorState(
+  editor: vscode.TextEditor,
+  report: FileQualityReport,
+  cfg: ReturnType<typeof getConfig>,
+): void {
+  const options = {
+    document: editor.document,
+    scoreThreshold: cfg.scoreThreshold,
+  };
   updateDiagnostics(diagnosticCollection, editor.document.uri, report, options);
 
   if (cfg.showInlineScores) {
@@ -276,9 +332,13 @@ function updateEditorState(editor: vscode.TextEditor, report: FileQualityReport,
   }
 }
 
-function handleAnalysisError(doc: vscode.TextDocument, editor: vscode.TextEditor, err: unknown): void {
+function handleAnalysisError(
+  doc: vscode.TextDocument,
+  editor: vscode.TextEditor,
+  err: unknown,
+): void {
   const msg = err instanceof Error ? err.message : String(err);
-  if (msg.includes('Unsupported file type')) {
+  if (msg.includes("Unsupported file type")) {
     const ext = extname(doc.fileName).toLowerCase();
     unsupportedExtensions.add(ext);
     clearDecorations(editor);
@@ -291,10 +351,14 @@ function handleAnalysisError(doc: vscode.TextDocument, editor: vscode.TextEditor
 function showReport(report: FileQualityReport): void {
   outputChannel.clear();
   outputChannel.appendLine(`Qualitas Report: ${report.filePath}`);
-  outputChannel.appendLine(`Score: ${report.score.toFixed(1)} (${report.grade})`);
-  outputChannel.appendLine(`Functions: ${report.functionCount} | Classes: ${report.classCount}`);
+  outputChannel.appendLine(
+    `Score: ${report.score.toFixed(1)} (${report.grade})`,
+  );
+  outputChannel.appendLine(
+    `Functions: ${report.functionCount} | Classes: ${report.classCount}`,
+  );
   outputChannel.appendLine(`Flagged functions: ${report.flaggedFunctionCount}`);
-  outputChannel.appendLine('');
+  outputChannel.appendLine("");
 
   showReportFunctions(report);
   showReportClasses(report);
@@ -316,7 +380,9 @@ function showReportFunctions(report: FileQualityReport): void {
 
 function showReportClasses(report: FileQualityReport): void {
   for (const cls of report.classes) {
-    outputChannel.appendLine(`  class ${cls.name} -${cls.grade} ${cls.score.toFixed(1)}`);
+    outputChannel.appendLine(
+      `  class ${cls.name} -${cls.grade} ${cls.score.toFixed(1)}`,
+    );
     for (const method of cls.methods) {
       outputChannel.appendLine(
         `    ${method.name} -${method.grade} ${method.score.toFixed(1)} (L${method.location.startLine}-${method.location.endLine})`,
@@ -341,39 +407,54 @@ function showProjectReport(report: ProjectQualityReport): void {
   outputChannel.show();
 }
 
-function showProjectReportHeader(report: ProjectQualityReport, s: ProjectQualityReport['summary']): void {
-  outputChannel.appendLine('===========================================');
+function showProjectReportHeader(
+  report: ProjectQualityReport,
+  s: ProjectQualityReport["summary"],
+): void {
+  outputChannel.appendLine("===========================================");
   outputChannel.appendLine(`  Qualitas Workspace Report`);
-  outputChannel.appendLine('===========================================');
-  outputChannel.appendLine('');
-  outputChannel.appendLine(`  Score:   ${report.score.toFixed(1)} (${report.grade})`);
+  outputChannel.appendLine("===========================================");
+  outputChannel.appendLine("");
+  outputChannel.appendLine(
+    `  Score:   ${report.score.toFixed(1)} (${report.grade})`,
+  );
   outputChannel.appendLine(`  Files:   ${s.totalFiles}`);
-  outputChannel.appendLine(`  Functions: ${s.totalFunctions} | Classes: ${s.totalClasses}`);
-  outputChannel.appendLine(`  Flagged: ${s.flaggedFiles} files, ${s.flaggedFunctions} functions`);
-  outputChannel.appendLine('');
+  outputChannel.appendLine(
+    `  Functions: ${s.totalFunctions} | Classes: ${s.totalClasses}`,
+  );
+  outputChannel.appendLine(
+    `  Flagged: ${s.flaggedFiles} files, ${s.flaggedFunctions} functions`,
+  );
+  outputChannel.appendLine("");
 }
 
-function showGradeDistribution(s: ProjectQualityReport['summary']): void {
-  outputChannel.appendLine('  Grade Distribution');
-  outputChannel.appendLine(`    A: ${s.gradeDistribution.a}  B: ${s.gradeDistribution.b}  C: ${s.gradeDistribution.c}  D: ${s.gradeDistribution.d}  F: ${s.gradeDistribution.f}`);
-  outputChannel.appendLine('');
+function showGradeDistribution(s: ProjectQualityReport["summary"]): void {
+  outputChannel.appendLine("  Grade Distribution");
+  outputChannel.appendLine(
+    `    A: ${s.gradeDistribution.a}  B: ${s.gradeDistribution.b}  C: ${s.gradeDistribution.c}  D: ${s.gradeDistribution.d}  F: ${s.gradeDistribution.f}`,
+  );
+  outputChannel.appendLine("");
 }
 
 function showWorstFunctions(report: ProjectQualityReport): void {
   if (report.worstFunctions.length > 0) {
-    outputChannel.appendLine('  Worst Functions');
-    outputChannel.appendLine('  ---------------');
+    outputChannel.appendLine("  Worst Functions");
+    outputChannel.appendLine("  ---------------");
     for (const fn of report.worstFunctions) {
-      const file = fn.location.file || '';
-      outputChannel.appendLine(`    ${fn.grade} ${fn.score.toFixed(1).padStart(5)}  ${fn.name}  (${file}:${fn.location.startLine})`);
+      const file = fn.location.file || "";
+      outputChannel.appendLine(
+        `    ${fn.grade} ${fn.score.toFixed(1).padStart(5)}  ${fn.name}  (${file}:${fn.location.startLine})`,
+      );
       for (const flag of fn.flags) {
-        outputChannel.appendLine(`            [${flag.severity}] ${flag.message}`);
+        outputChannel.appendLine(
+          `            [${flag.severity}] ${flag.message}`,
+        );
       }
     }
   }
-  outputChannel.appendLine('');
+  outputChannel.appendLine("");
 }
 
 function showProjectReportFooter(): void {
-  outputChannel.appendLine('===========================================');
+  outputChannel.appendLine("===========================================");
 }
