@@ -288,25 +288,27 @@ function runAnalysis(editor: vscode.TextEditor): void {
   }
 }
 
+function formatResultLog(report: FileQualityReport): string {
+  const flagCount =
+    report.flaggedFunctionCount + (report.fileScope?.flags.length ?? 0);
+  const fileScope = report.fileScope
+    ? ` fileScope=${report.fileScope.score.toFixed(1)}(${report.fileScope.grade})`
+    : "";
+  return `[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount} flags=${flagCount}${fileScope}`;
+}
+
 function analyzeAndLogDocument(doc: vscode.TextDocument): FileQualityReport {
   outputChannel.appendLine(
     `[qualitas] Analyzing: ${doc.fileName} (${doc.languageId})`,
   );
   const projectConfig = loadProjectConfig();
-  const analysisOptions = getAnalysisOptions(projectConfig);
   const report = analyzeDocument(
     doc.getText(),
     doc.fileName,
-    analysisOptions,
+    getAnalysisOptions(projectConfig),
     projectConfig,
   );
-  outputChannel.appendLine(
-    `[qualitas] Result: score=${report.score.toFixed(1)} grade=${report.grade} functions=${report.functionCount}` +
-      ` flags=${report.flaggedFunctionCount + (report.fileScope?.flags.length ?? 0)}` +
-      (report.fileScope
-        ? ` fileScope=${report.fileScope.score.toFixed(1)}(${report.fileScope.grade})`
-        : ""),
-  );
+  outputChannel.appendLine(formatResultLog(report));
   return report;
 }
 
