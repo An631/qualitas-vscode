@@ -76,13 +76,34 @@ function buildFunctionTooltip(fn: FunctionQualityReport): string {
     `${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
   ];
 
-  if (fn.flags.length === 0) {
-    lines.push('', 'No issues found.');
-  } else {
+  // Metric summary with score impact
+  const m = fn.metrics;
+  const b = fn.scoreBreakdown;
+  if (m && b) {
+    const impact = (penalty: number) => penalty > 0 ? `(-${penalty.toFixed(1)} pts)` : '';
+
     lines.push('');
+    lines.push('Results:');
+    lines.push(`  Cognitive Flow: ${m.cognitiveFlow.score} ${impact(b.cfcPenalty)}`);
+    lines.push(`  Data Complexity: ${m.dataComplexity.difficulty.toFixed(1)} ${impact(b.dciPenalty)}`);
+    lines.push(`  Identifier Reference: ${m.identifierReference.totalIrc.toFixed(1)} ${impact(b.ircPenalty)}`);
+    lines.push(`  Dependency Coupling: ${m.dependencyCoupling.rawScore.toFixed(1)} ${impact(b.dcPenalty)}`);
+    lines.push(`  Structural: ${impact(b.smPenalty)}`);
+    lines.push(`    - Parameters: ${m.structural.parameterCount}`);
+    lines.push(`    - Lines of Code: ${m.structural.loc}`);
+    lines.push(`    - Max Nesting Depth: ${m.structural.maxNestingDepth}`);
+    lines.push(`    - Return Statements: ${m.structural.returnCount}`);
+    lines.push('');
+    lines.push(`Total: ${fn.score.toFixed(1)}/100 (${b.totalPenalty.toFixed(1)} pts deducted)`);
+  }
+
+  // Flags
+  if (fn.flags.length > 0) {
+    lines.push('');
+    lines.push('Flags:');
     for (const flag of fn.flags) {
-      lines.push(`- ${flag.message}`);
-      lines.push(`  ${flag.suggestion}`);
+      lines.push(`  - ${flag.message}`);
+      lines.push(`    ${flag.suggestion}`);
     }
   }
 

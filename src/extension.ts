@@ -152,8 +152,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('qualitas.analyzeWorkspace', async () => {
-      await handleAnalyzeWorkspaceCommand();
+    vscode.commands.registerCommand('qualitas.analyzeFolder', async () => {
+      await handleAnalyzeFolderCommand();
     }),
   );
 
@@ -174,27 +174,33 @@ function handleAnalyzeFileCommand(): void {
   }
 }
 
-async function handleAnalyzeWorkspaceCommand(): Promise<void> {
-  const folders = vscode.workspace.workspaceFolders;
-  if (!folders || folders.length === 0) {
-    vscode.window.showInformationMessage('Qualitas: No workspace folder open.');
-    return;
-  }
+async function handleAnalyzeFolderCommand(): Promise<void> {
+  const uris = await vscode.window.showOpenDialog({
+    canSelectFiles: false,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: 'Analyze Folder',
+    defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri,
+  });
+
+  if (!uris || uris.length === 0) return;
+
+  const folderPath = uris[0].fsPath;
 
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: 'Qualitas: Analyzing workspace...',
+      title: `Qualitas: Analyzing ${folderPath}...`,
       cancellable: false,
     },
     async () => {
       try {
         const cfg = getConfig();
-        const report = await analyzeWorkspace(folders[0].uri.fsPath, cfg.analysisOptions);
+        const report = await analyzeWorkspace(folderPath, cfg.analysisOptions);
         showProjectReport(report);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(`Qualitas: Workspace analysis failed -${msg}`);
+        vscode.window.showErrorMessage(`Qualitas: Folder analysis failed - ${msg}`);
       }
     },
   );

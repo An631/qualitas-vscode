@@ -43,8 +43,8 @@
         "title": "Qualitas: Analyze Current File"
       },
       {
-        "command": "qualitas.analyzeWorkspace",
-        "title": "Qualitas: Analyze Workspace"
+        "command": "qualitas.analyzeFolder",
+        "title": "Qualitas: Analyze Folder"
       },
       {
         "command": "qualitas.showReport",
