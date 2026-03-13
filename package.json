@@ -3,7 +3,7 @@
   "displayName": "Qualitas",
   "description": "Real-time code quality scores, refactoring flags, and improvement suggestions inline — powered by qualitas",
   "version": "0.1.17",
-  "publisher": "qualitas",
+  "publisher": "QualitasCorp",
   "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"

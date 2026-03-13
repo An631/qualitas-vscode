@@ -99,6 +99,9 @@ jobs:
       - name: Build VSIX
         run: npm run package
 
+      - name: Publish to VS Code Marketplace
+        run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
