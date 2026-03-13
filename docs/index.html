@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Qualitas - Code Quality for VS Code</title>
   <meta name="description" content="Real-time code quality scores, refactoring flags, and AI-powered fixes directly in VS Code.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231a1a2e'/><text x='16' y='24' text-anchor='middle' font-size='22' font-weight='bold' fill='%234caf50'>Q</text></svg>">
+  <link rel="icon" href="icon.png" type="image/png">
   <style>
     :root {
       --bg: #0d1117;
@@ -55,16 +55,15 @@
       gap: 8px;
     }
     .logo-mark {
-      background: var(--accent);
-      color: var(--bg);
       width: 32px;
       height: 32px;
       border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.1rem;
+    }
+    .hero-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+      margin-bottom: 24px;
     }
     nav .links { display: flex; gap: 24px; align-items: center; }
     nav .links a { color: var(--text-muted); font-size: 0.95rem; }
@@ -168,6 +167,72 @@
     .feature-card .icon { font-size: 1.8rem; margin-bottom: 12px; }
     .feature-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
     .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+    /* ── Getting Started ── */
+    .getting-started { padding: 60px 0; }
+    .getting-started h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+    .getting-started .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .tab {
+      padding: 10px 24px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .tab:hover { border-color: var(--accent); color: var(--text); }
+    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tab-content { display: none; max-width: 750px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+    .step {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .step-body h3 { font-size: 1.1rem; margin-bottom: 6px; }
+    .step-body p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px; }
+    .code-inline {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: var(--accent-light);
+      overflow-x: auto;
+      display: block;
+      margin-top: 8px;
+    }
 
     /* ── Pillars ── */
     .pillars { padding: 60px 0; }
@@ -290,7 +355,7 @@
 <nav>
   <div class="container">
     <div class="logo">
-      <div class="logo-mark">Q</div>
+      <img src="icon.png" alt="Qualitas" class="logo-mark">
       Qualitas
     </div>
     <div class="links">
@@ -303,6 +368,7 @@
 
 <section class="hero">
   <div class="container">
+    <img src="icon.png" alt="Qualitas" class="hero-icon">
     <h1>Code Quality, Right in Your Editor</h1>
     <p class="tagline">
       Real-time quality scores, refactoring flags, and AI-powered fixes for every function you write.
@@ -362,6 +428,101 @@
         <div class="icon">+</div>
         <h3>Multi-Language</h3>
         <p>Supports TypeScript, JavaScript, Python, and Rust out of the box. Automatically detects the language from file extension.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="getting-started">
+  <div class="container">
+    <h2>Getting Started</h2>
+    <p class="subtitle">Choose your path: use the VS Code extension for real-time feedback, or the npm package for CLI and CI pipelines</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('vscode')">VS Code Extension</button>
+      <button class="tab" onclick="showTab('npm')">npm Package</button>
+    </div>
+
+    <div id="tab-vscode" class="tab-content active">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Download the extension</h3>
+          <p>Grab the latest .vsix from GitHub Releases and install it.</p>
+          <code class="code-inline">code --install-extension qualitas-vscode-x.x.x.vsix</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Open a project</h3>
+          <p>Open any TypeScript, JavaScript, Python, or Rust project in VS Code. Qualitas activates automatically and begins analyzing your files.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>See scores instantly</h3>
+          <p>Every function and class gets a CodeLens score above it (e.g. <strong>Score A: 92.3</strong>). Functions with issues get squiggly underlines on the name.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Fix with AI</h3>
+          <p>Click the lightbulb on any squiggled function and choose <strong>"Fix with AI"</strong> to send the issue to your AI assistant (Copilot, etc.) with full context.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Configure your rules</h3>
+          <p>Add a <strong>qualitas.config.js</strong> to your project root to set the profile, thresholds, and per-language flags. The whole team shares the same rules.</p>
+          <code class="code-inline">module.exports = { profile: "strict", threshold: 80 };</code>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-npm" class="tab-content">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Install the package</h3>
+          <p>Add qualitas as a dev dependency to your project.</p>
+          <code class="code-inline">npm install --save-dev qualitas</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Analyze from the CLI</h3>
+          <p>Run qualitas on your project to see a full quality report with scores for every function.</p>
+          <code class="code-inline">npx qualitas ./ -f detail</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Add to your scripts</h3>
+          <p>Add quality checks to your package.json for easy access and CI integration.</p>
+          <code class="code-inline">"scripts": { "quality": "qualitas ./ -f detail" }</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Use the API programmatically</h3>
+          <p>Import qualitas in your code for custom analysis, CI gates, or automation pipelines.</p>
+          <code class="code-inline">const { analyzeSource } = require("qualitas");<br>const report = analyzeSource(source, "file.ts");<br>console.log(report.score, report.grade);</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Configure</h3>
+          <p>Create a <strong>qualitas.config.js</strong> in your project root to customize profiles, weights, flag thresholds, and per-language settings.</p>
+          <code class="code-inline">module.exports = {<br>&nbsp;&nbsp;profile: "strict",<br>&nbsp;&nbsp;threshold: 80,<br>&nbsp;&nbsp;exclude: ["vendor", "generated"],<br>};</code>
+        </div>
       </div>
     </div>
   </div>
@@ -457,5 +618,13 @@
   </div>
 </footer>
 
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
 </body>
 </html>
