@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.17
+
+### Patch Changes
+
+- [`4e4e867`](https://github.com/An631/qualitas-vscode/commit/4e4e86760f34d98862a729638a7939f7df2abcc0) - Changing the auto fixes to go through the chat window instead
+
 ## 0.1.16
 
 ### Patch Changes
