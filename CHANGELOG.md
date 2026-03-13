@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.18
+
+### Patch Changes
+
+- [`38e7d5a`](https://github.com/An631/qualitas-vscode/commit/38e7d5af30b8576a1e5d3fff24c4658ccb779f83) - Add VS Code Marketplace publishing to release pipeline
+
 ## 0.1.17
 
 ### Patch Changes
