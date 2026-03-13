@@ -79,7 +79,9 @@ export function registerAICommands(
           diag.range.end,
         );
 
-        const prompt = `Refactor this code to fix the following quality issue:\n\n${diag.message}`;
+        const file = editor.document.uri.fsPath;
+        const line = diag.range.start.line + 1;
+        const prompt = `Refactor the code at ${file}:${line} to fix the following quality issue:\n\n${diag.message}`;
 
         await openAIChat(prompt);
       },
@@ -103,7 +105,8 @@ export function registerAICommands(
       }
 
       const scoreThreshold = deps.getThreshold();
-      const prompt = buildFixAllPrompt(report, scoreThreshold);
+      const filePath = editor.document.uri.fsPath;
+      const prompt = buildFixAllPrompt(report, scoreThreshold, filePath);
 
       if (!prompt) {
         vscode.window.showInformationMessage(
@@ -130,26 +133,20 @@ function selectEntireFile(editor: vscode.TextEditor): void {
 
 async function openAIChat(prompt: string): Promise<void> {
   try {
-    await vscode.commands.executeCommand("inlineChat.start", {
-      message: prompt,
-      autoSend: true,
+    await vscode.commands.executeCommand("workbench.action.chat.open", {
+      query: prompt,
     });
   } catch {
-    try {
-      await vscode.commands.executeCommand("workbench.action.chat.open", {
-        query: prompt,
-      });
-    } catch {
-      vscode.window.showInformationMessage(
-        "Qualitas: No AI assistant found. Install GitHub Copilot or another AI extension to use this feature.",
-      );
-    }
+    vscode.window.showInformationMessage(
+      "Qualitas: No AI chat found. Install GitHub Copilot or another AI extension to use this feature.",
+    );
   }
 }
 
 function buildFixAllPrompt(
   report: FileQualityReport,
   threshold: number,
+  filePath?: string,
 ): string | null {
   const issues: string[] = [];
 
@@ -170,7 +167,7 @@ function buildFixAllPrompt(
 
   if (issues.length === 0) return null;
 
-  return buildPromptMessage(issues, threshold);
+  return buildPromptMessage(issues, threshold, filePath);
 }
 
 function collectFunctionIssues(
@@ -183,7 +180,12 @@ function collectFunctionIssues(
 
   if (!hasFlags && !belowThreshold) return;
 
-  const parts = [`${fn.name} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`];
+  const loc = fn.location.file
+    ? `${fn.location.file}:${fn.location.startLine}`
+    : `line ${fn.location.startLine}`;
+  const parts = [
+    `${fn.name} at ${loc} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
+  ];
 
   if (belowThreshold) {
     parts.push(`  Score is below the threshold of ${threshold}.`);
@@ -203,6 +205,7 @@ function collectClassIssues(
     score: number;
     grade: string;
     flags: Array<{ message: string; suggestion: string }>;
+    location: { file: string; startLine: number };
   },
   issues: string[],
   threshold: number,
@@ -212,8 +215,11 @@ function collectClassIssues(
 
   if (!hasClassFlags && !classBelowThreshold) return;
 
+  const loc = cls.location.file
+    ? `${cls.location.file}:${cls.location.startLine}`
+    : `line ${cls.location.startLine}`;
   const parts = [
-    `class ${cls.name} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`,
+    `class ${cls.name} at ${loc} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`,
   ];
 
   if (classBelowThreshold) {
@@ -228,9 +234,14 @@ function collectClassIssues(
   issues.push(parts.join("\n"));
 }
 
-function buildPromptMessage(issues: string[], threshold: number): string {
+function buildPromptMessage(
+  issues: string[],
+  threshold: number,
+  filePath?: string,
+): string {
+  const fileRef = filePath ? ` in ${filePath}` : "";
   const lines = [
-    `Refactor this file to fix ${issues.length} quality issue(s).`,
+    `Refactor the code${fileRef} to fix ${issues.length} quality issue(s).`,
     `The minimum acceptable quality score is ${threshold}/100.`,
     "",
     "Issues to fix:",
