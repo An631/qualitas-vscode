@@ -1,6 +1,7 @@
 node_modules/
 dist/
 *.vsix
+NUL
 
 # Claude files
 .claude/settings.local.json
