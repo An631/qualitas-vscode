@@ -81,7 +81,13 @@ export function registerAICommands(
 
         const file = editor.document.uri.fsPath;
         const line = diag.range.start.line + 1;
-        const prompt = `Refactor the code at ${file}:${line} to fix the following quality issue:\n\n${diag.message}`;
+        const prompt = `Refactor the code at ${file}:${line} to fix the following quality issue:
+${diag.message}
+
+Requirements:,
+- If splitting a function creates new functions, ensure those also meet the quality threshold.
+- It is critical that we preserve the existing code behavior after the refactor.
+`;
 
         await openAIChat(prompt);
       },
