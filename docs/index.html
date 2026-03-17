@@ -12,818 +12,322 @@
       --surface: #161b22;
       --border: #30363d;
       --text: #e6edf3;
-      --text-muted: #8b949e;
+      --muted: #8b949e;
       --accent: #4caf50;
       --accent-light: #66bb6a;
-      --grade-a: #4caf50;
-      --grade-b: #00bcd4;
-      --grade-c: #ffc107;
-      --grade-d: #ff5722;
-      --grade-f: #d32f2f;
-      --glow: rgba(76, 175, 80, 0.15);
+      --ga: #4caf50; --gb: #00bcd4; --gc: #ffc107; --gd: #ff5722; --gf: #d32f2f;
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
     a { color: var(--accent-light); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-
-    /* ── Animations ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-40px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(40px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes typewriter {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    /* ── Scroll-driven parallax — styles set by JS ── */
+    [data-scroll] {
+      will-change: transform, opacity;
     }
 
-    .reveal {
-      opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .reveal-left {
-      opacity: 0;
-      transform: translateX(-40px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .reveal-left.visible { opacity: 1; transform: translateX(0); }
-    .reveal-right {
-      opacity: 0;
-      transform: translateX(40px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 10px; font-size: 1rem; font-weight: 600; transition: transform .25s, box-shadow .25s, background .25s; }
+    .btn:hover { transform: translateY(-2px); text-decoration: none; }
+    .btn-p { background: var(--accent); color: #fff; box-shadow: 0 4px 20px rgba(76,175,80,.3); }
+    .btn-p:hover { background: var(--accent-light); box-shadow: 0 6px 28px rgba(76,175,80,.4); }
+    .btn-s { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-s:hover { border-color: var(--accent); }
+    .cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 
     /* ── Nav ── */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      padding: 16px 0;
-      background: rgba(13, 17, 23, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.3s, background 0.3s;
-    }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding-top: 16px; padding-bottom: 16px; background: rgba(13,17,23,.85); backdrop-filter: blur(12px); border-bottom: 1px solid transparent; transition: border-color .3s; }
     nav.scrolled { border-bottom-color: var(--border); }
-    nav .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .logo-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      transition: transform 0.3s;
-    }
-    .logo:hover .logo-mark { transform: rotate(10deg) scale(1.1); }
-    nav .links { display: flex; gap: 24px; align-items: center; }
-    nav .links a {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      transition: color 0.2s;
-    }
+    nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.4rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .logo img { width: 32px; height: 32px; border-radius: 6px; }
+    nav .links { display: flex; gap: 24px; }
+    nav .links a { color: var(--muted); font-size: .95rem; }
     nav .links a:hover { color: var(--text); text-decoration: none; }
 
     /* ── Hero ── */
-    .hero {
-      text-align: center;
-      padding: 140px 0 80px;
-      position: relative;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .hero > .container { position: relative; z-index: 1; }
-    .hero-icon {
-      width: 96px;
-      height: 96px;
-      border-radius: 20px;
-      margin-bottom: 24px;
-      animation: float 4s ease-in-out infinite;
-      filter: drop-shadow(0 0 30px var(--glow));
-    }
-    .hero h1 {
-      font-size: 3.5rem;
-      font-weight: 800;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, var(--accent), var(--grade-b), var(--accent));
-      background-size: 200% 200%;
-      animation: gradientShift 4s ease infinite;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero .tagline {
-      font-size: 1.3rem;
-      color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto 40px;
-      animation: fadeUp 1s ease 0.3s both;
-    }
-    .hero .cta {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-      animation: fadeUp 1s ease 0.5s both;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 32px;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-      transition: width 0.4s, height 0.4s, top 0.4s, left 0.4s;
-    }
-    .btn:hover::after {
-      width: 300px;
-      height: 300px;
-      top: -100px;
-      left: -100px;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
-    }
-    .btn-primary:hover {
-      background: var(--accent-light);
-      text-decoration: none;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 30px rgba(76, 175, 80, 0.4);
-    }
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover {
-      border-color: var(--accent);
-      text-decoration: none;
-      transform: translateY(-2px);
-    }
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding-top: 120px; padding-bottom: 80px; position: relative; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 600px 600px at 50% 40%, rgba(76,175,80,.12), transparent 70%); pointer-events: none; }
+    .hero .wrap { position: relative; z-index: 1; }
+    .hero-icon { width: 96px; height: 96px; border-radius: 20px; margin-bottom: 24px; animation: float 4s ease-in-out infinite; filter: drop-shadow(0 0 30px rgba(76,175,80,.25)); }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .hero h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, var(--accent), var(--gb), var(--accent)); background-size: 200% 200%; animation: grad 4s ease infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    @keyframes grad { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
+    .hero .sub { font-size: 1.3rem; color: var(--muted); max-width: 600px; margin: 0 auto 40px; }
+    .demo { margin: 56px auto 0; max-width: 620px; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; font-family: 'Cascadia Code','Fira Code','JetBrains Mono',monospace; font-size: .9rem; line-height: 1.8; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .demo .cl{color:var(--muted);font-size:.8rem} .demo .kw{color:#c678dd} .demo .fn{color:#61dafb} .demo .pr{color:#e5c07b} .demo .ty{color:#4caf50} .demo .br{color:var(--muted)} .demo .cm{color:#5c6370;font-style:italic} .demo .sq{text-decoration:wavy underline var(--gc);text-underline-offset:4px}
 
-    /* ── Score Demo ── */
-    .score-demo {
-      margin: 56px auto 0;
-      max-width: 620px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px 32px;
-      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
-      line-height: 1.8;
-      text-align: left;
-      animation: fadeUp 1s ease 0.7s both;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .score-demo:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 24px 70px rgba(0,0,0,0.4);
-    }
-    .score-demo .codelens { color: var(--text-muted); font-size: 0.8rem; }
-    .score-demo .keyword { color: #c678dd; }
-    .score-demo .fn-name { color: #61dafb; }
-    .score-demo .param { color: #e5c07b; }
-    .score-demo .type { color: #4caf50; }
-    .score-demo .brace { color: var(--text-muted); }
-    .score-demo .squiggle {
-      text-decoration: wavy underline;
-      text-decoration-color: var(--grade-c);
-      text-underline-offset: 4px;
-    }
-
-    /* ── Section titles ── */
-    section h2 {
-      text-align: center;
-      font-size: 2.2rem;
-      margin-bottom: 16px;
-    }
-
-    /* ── Features ── */
-    .features { padding: 100px 0; }
-    .features h2 { margin-bottom: 56px; }
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-    }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 32px;
-      transition: all 0.4s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0;
-      transition: opacity 0.4s;
-    }
-    .feature-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-6px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-    }
-    .feature-card:hover::before { opacity: 1; }
-    .feature-card .icon {
-      font-size: 2rem;
-      margin-bottom: 16px;
-      display: inline-block;
-      width: 48px;
-      height: 48px;
-      line-height: 48px;
-      text-align: center;
-      border-radius: 10px;
-      background: rgba(76, 175, 80, 0.1);
-      color: var(--accent);
-      transition: transform 0.3s;
-    }
-    .feature-card:hover .icon { transform: scale(1.1); }
-    .feature-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
-    .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
-
-    /* ── Getting Started ── */
-    .getting-started { padding: 100px 0; }
-    .getting-started .subtitle {
-      text-align: center;
-      color: var(--text-muted);
-      margin-bottom: 48px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 40px;
-    }
-    .tab {
-      padding: 12px 28px;
-      border-radius: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-    .tab:hover { border-color: var(--accent); color: var(--text); }
-    .tab.active {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-      box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
-    }
-    .tab-content { display: none; max-width: 750px; margin: 0 auto; }
-    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-    .step {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 36px;
-      opacity: 0;
-      animation: fadeUp 0.5s ease forwards;
-    }
-    .tab-content.active .step:nth-child(1) { animation-delay: 0.05s; }
-    .tab-content.active .step:nth-child(2) { animation-delay: 0.1s; }
-    .tab-content.active .step:nth-child(3) { animation-delay: 0.15s; }
-    .tab-content.active .step:nth-child(4) { animation-delay: 0.2s; }
-    .tab-content.active .step:nth-child(5) { animation-delay: 0.25s; }
-    .step-num {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1rem;
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    }
-    .step-body h3 { font-size: 1.1rem; margin-bottom: 6px; }
-    .step-body p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px; }
-    .code-inline {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 0.85rem;
-      color: var(--accent-light);
-      overflow-x: auto;
-      display: block;
-      margin-top: 8px;
-      transition: border-color 0.3s;
-    }
-    .code-inline:hover { border-color: var(--accent); }
+    /* ── Two-col split sections ── */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; padding-top: 120px; padding-bottom: 120px; }
+    .split h2 { font-size: 2.2rem; margin-bottom: 16px; }
+    .split p { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; }
+    .split ul { list-style: none; }
+    .split ul li { padding-top: 8px; padding-bottom: 8px; color: var(--muted); font-size: .95rem; display: flex; align-items: center; gap: 10px; }
+    .split ul li::before { content: ''; display: block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+    .card-stack { display: flex; flex-direction: column; gap: 16px; }
+    .mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; transition: border-color .3s, transform .3s; }
+    .mini-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .mini-card h4 { margin-bottom: 4px; }
+    .mini-card p { color: var(--muted); font-size: .9rem; margin: 0; }
 
     /* ── Pillars ── */
-    .pillars {
-      padding: 100px 0;
-      position: relative;
-    }
-    .pillars .subtitle {
-      text-align: center;
-      color: var(--text-muted);
-      margin-bottom: 48px;
-    }
-    .pillar-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .pillar {
-      text-align: center;
-      padding: 32px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      transition: all 0.4s ease;
-      cursor: default;
-    }
-    .pillar:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-      border-color: var(--accent);
-    }
-    .pillar .score {
-      font-size: 2.2rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-      transition: transform 0.3s;
-    }
-    .pillar:hover .score { transform: scale(1.15); }
-    .pillar .label { color: var(--text-muted); font-size: 0.9rem; }
+    .pillars { text-align: center; padding-top: 120px; padding-bottom: 120px; }
+    .pillars h2 { font-size: 2.2rem; margin-bottom: 8px; }
+    .pillars .sub { color: var(--muted); margin-bottom: 48px; }
+    .pillar-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .pill { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px 24px; min-width: 160px; transition: transform .3s, border-color .3s; }
+    .pill:hover { transform: translateY(-8px); border-color: var(--accent); }
+    .pill .abbr { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .pill .lbl { color: var(--muted); font-size: .85rem; }
 
     /* ── Grades ── */
-    .grades { padding: 60px 0 100px; text-align: center; }
-    .grade-bar {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 32px;
-    }
-    .grade {
-      width: 64px;
-      height: 64px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.5rem;
-      color: #fff;
-      transition: all 0.3s ease;
-      cursor: default;
-    }
-    .grade:hover {
-      transform: translateY(-6px) scale(1.1);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
+    .grades { text-align: center; padding-top: 60px; padding-bottom: 120px; }
+    .grades h2 { font-size: 2.2rem; margin-bottom: 32px; }
+    .grade-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .g { width: 64px; height: 64px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: #fff; transition: transform .3s; }
+    .g:hover { transform: translateY(-6px) scale(1.1); }
+
+    /* ── Getting started ── */
+    .started { padding-top: 120px; padding-bottom: 120px; text-align: center; }
+    .started h2 { font-size: 2.2rem; margin-bottom: 8px; }
+    .started .sub { color: var(--muted); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; }
+    .tab { padding: 12px 28px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: .95rem; font-weight: 600; transition: all .3s; }
+    .tab:hover { border-color: var(--accent); color: var(--text); }
+    .tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tp { display: none; max-width: 700px; margin: 0 auto; text-align: left; }
+    .tp.on { display: block; }
+    .step { display: flex; gap: 20px; margin-bottom: 32px; }
+    .sn { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: 0 4px 12px rgba(76,175,80,.3); }
+    .sb h3 { font-size: 1.1rem; margin-bottom: 4px; }
+    .sb p { color: var(--muted); font-size: .95rem; }
+    .ci { display: block; margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-family: 'Cascadia Code','Fira Code',monospace; font-size: .85rem; color: var(--accent-light); overflow-x: auto; }
 
     /* ── Config ── */
-    .config-section { padding: 100px 0; }
-    .config-section .subtitle {
-      text-align: center;
-      color: var(--text-muted);
-      margin-bottom: 40px;
-    }
-    .config-block {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px 32px;
-      max-width: 700px;
-      margin: 0 auto;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      color: var(--text-muted);
-      overflow-x: auto;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.2);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .config-block:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .config-block .key { color: #e5c07b; }
-    .config-block .str { color: #98c379; }
-    .config-block .num { color: #d19a66; }
-    .config-block .bool { color: #c678dd; }
-    .config-block .comment { color: #5c6370; font-style: italic; }
+    .config { padding-top: 120px; padding-bottom: 120px; text-align: center; }
+    .config h2 { font-size: 2.2rem; margin-bottom: 8px; }
+    .config .sub { color: var(--muted); margin-bottom: 40px; }
+    .cfg { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; max-width: 700px; margin: 0 auto; text-align: left; font-family: 'Cascadia Code','Fira Code',monospace; font-size: .85rem; line-height: 1.7; color: var(--muted); box-shadow: 0 16px 48px rgba(0,0,0,.2); }
+    .cfg .k{color:#e5c07b} .cfg .s{color:#98c379} .cfg .n{color:#d19a66} .cfg .b{color:#c678dd} .cfg .c{color:#5c6370;font-style:italic}
 
-    /* ── CTA ── */
-    .final-cta {
-      text-align: center;
-      padding: 120px 0;
-      position: relative;
-    }
-    .final-cta::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .final-cta > .container { position: relative; z-index: 1; }
-    .final-cta h2 { font-size: 2.4rem; margin-bottom: 16px; }
-    .final-cta p {
-      color: var(--text-muted);
-      margin-bottom: 40px;
-      font-size: 1.15rem;
-    }
+    /* ── Final CTA ── */
+    .final { text-align: center; padding-top: 120px; padding-bottom: 120px; position: relative; }
+    .final::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 500px 500px at 50% 60%, rgba(76,175,80,.1), transparent 70%); pointer-events: none; }
+    .final .wrap { position: relative; z-index: 1; }
+    .final h2 { font-size: 2.4rem; margin-bottom: 16px; }
+    .final p { color: var(--muted); margin-bottom: 40px; font-size: 1.15rem; }
 
     /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-    footer a { color: var(--text-muted); transition: color 0.2s; }
-    footer a:hover { color: var(--accent); }
+    footer { border-top: 1px solid var(--border); padding-top: 32px; padding-bottom: 32px; text-align: center; color: var(--muted); font-size: .85rem; }
+    footer a { color: var(--muted); } footer a:hover { color: var(--accent); }
 
-    /* ── Slide animations ── */
-    .slide-left {
-      opacity: 0;
-      transform: translateX(-80px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .slide-left.visible { opacity: 1; transform: translateX(0); }
-    .slide-right {
-      opacity: 0;
-      transform: translateX(80px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .slide-right.visible { opacity: 1; transform: translateX(0); }
-    .scale-in {
-      opacity: 0;
-      transform: scale(0.85);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .scale-in.visible { opacity: 1; transform: scale(1); }
+    /* ── Tablet (<=768px) ── */
+    @media (max-width: 768px) {
+      .wrap { padding: 0 24px; }
 
-    @media (max-width: 640px) {
-      .hero { padding: 120px 0 60px; }
-      .hero h1 { font-size: 2.4rem; }
-      .hero .tagline { font-size: 1.1rem; }
-      .feature-grid { grid-template-columns: 1fr; }
-      .pillar-list { grid-template-columns: repeat(2, 1fr); }
+      /* Nav */
+      nav { padding-top: 12px; padding-bottom: 12px; }
+      nav .links { gap: 16px; }
+      nav .links a { font-size: .85rem; }
+
+      /* Hero */
+      .hero { padding-top: 100px; padding-bottom: 60px; min-height: auto; }
+      .hero h1 { font-size: 2.2rem; }
+      .hero .sub { font-size: 1.05rem; padding: 0 8px; }
+      .hero-icon { width: 72px; height: 72px; border-radius: 16px; }
+      .demo { margin-top: 32px; padding: 20px; font-size: .8rem; line-height: 1.6; }
+
+      /* Buttons stack */
+      .cta { flex-direction: column; align-items: center; }
+      .btn { width: 100%; max-width: 320px; justify-content: center; padding: 14px 24px; }
+
+      /* Split sections stack */
+      .split { grid-template-columns: 1fr; gap: 36px; padding-top: 72px; padding-bottom: 72px; }
+      .split-reverse > :first-child { order: 2; }
+      .split-reverse > :last-child { order: 1; }
+      .split h2 { font-size: 1.8rem; }
+      .split p { font-size: .95rem; }
+
+      /* Cards */
+      .mini-card { padding: 16px 20px; }
+      .mini-card h4 { font-size: .95rem; }
+      .mini-card p { font-size: .85rem; }
+
+      /* Pillars */
+      .pillars, .grades, .started, .config, .final { padding-top: 72px; padding-bottom: 72px; }
+      .pillar-row { gap: 12px; }
+      .pill { min-width: 130px; padding: 24px 16px; }
+      .pill .abbr { font-size: 1.6rem; }
+
+      /* Grades */
+      .grades { padding-top: 48px; padding-bottom: 72px; }
+
+      /* Getting started */
+      .tabs { flex-direction: column; align-items: center; gap: 10px; }
+      .tab { width: 100%; max-width: 320px; text-align: center; }
+      .tp { padding: 0 4px; }
+      .step { margin-bottom: 28px; }
+      .ci { font-size: .78rem; padding: 10px 14px; }
+
+      /* Config */
+      .cfg { padding: 20px; font-size: .78rem; line-height: 1.6; }
+
+      /* Section headings */
+      .pillars h2, .grades h2, .started h2, .config h2, .final h2 { font-size: 1.8rem; }
+      .final h2 { font-size: 2rem; }
+      .final p { font-size: 1rem; }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-      .reveal, .reveal-left, .reveal-right, .slide-left, .slide-right, .scale-in { opacity: 1; transform: none; }
-      .hero-icon { animation: none; }
+    /* ── Phone (<=480px) ── */
+    @media (max-width: 480px) {
+      .wrap { padding: 0 16px; }
+
+      /* Nav compact */
+      .logo { font-size: 1.2rem; gap: 6px; }
+      .logo img { width: 28px; height: 28px; }
+      nav .links { gap: 12px; }
+      nav .links a { font-size: .8rem; }
+
+      /* Hero tight */
+      .hero { padding-top: 88px; padding-bottom: 48px; }
+      .hero h1 { font-size: 1.7rem; margin-bottom: 12px; }
+      .hero .sub { font-size: .95rem; margin-bottom: 28px; }
+      .hero-icon { width: 60px; height: 60px; border-radius: 14px; margin-bottom: 16px; }
+      .demo { padding: 16px; font-size: .75rem; border-radius: 10px; }
+
+      /* Split */
+      .split { gap: 24px; padding-top: 56px; padding-bottom: 56px; }
+      .split h2 { font-size: 1.5rem; }
+      .split p { font-size: .9rem; margin-bottom: 16px; }
+      .split ul li { font-size: .85rem; padding-top: 6px; padding-bottom: 6px; }
+
+      /* Cards */
+      .card-stack { gap: 12px; }
+      .mini-card { padding: 14px 16px; border-radius: 10px; }
+
+      /* Pillars stack vertically */
+      .pillar-row { flex-direction: column; align-items: center; gap: 12px; }
+      .pill { width: 100%; max-width: 260px; padding: 20px 16px; }
+      .pill .abbr { font-size: 1.4rem; }
+      .pill .lbl { font-size: .8rem; }
+
+      /* Grades smaller */
+      .grade-row { gap: 10px; }
+      .g { width: 48px; height: 48px; font-size: 1.2rem; border-radius: 10px; }
+
+      /* Steps */
+      .step { gap: 12px; margin-bottom: 24px; }
+      .sn { width: 32px; height: 32px; font-size: .85rem; }
+      .sb h3 { font-size: 1rem; }
+      .sb p { font-size: .88rem; }
+      .ci { font-size: .72rem; padding: 8px 12px; border-radius: 6px; }
+
+      /* Config */
+      .cfg { padding: 14px 16px; font-size: .72rem; border-radius: 10px; }
+
+      /* Section headings */
+      .pillars h2, .grades h2, .started h2, .config h2 { font-size: 1.5rem; }
+      .pillars, .grades, .started, .config, .final { padding-top: 56px; padding-bottom: 56px; }
+      .final h2 { font-size: 1.7rem; }
+      .final p { font-size: .95rem; margin-bottom: 28px; }
+
+      /* Footer */
+      footer { padding-top: 24px; padding-bottom: 24px; font-size: .8rem; }
     }
   </style>
 </head>
 <body>
 
-<nav>
-  <div class="container">
-    <div class="logo">
-      <img src="icon.png" alt="Qualitas" class="logo-mark">
-      Qualitas
-    </div>
-    <div class="links">
-      <a href="https://github.com/An631/qualitas-vscode">GitHub</a>
-      <a href="https://github.com/An631/qualitas-vscode/releases">Releases</a>
-      <a href="https://www.npmjs.com/package/qualitas">npm</a>
-    </div>
+<nav><div class="wrap">
+  <div class="logo"><img src="icon.png" alt="Q"> Qualitas</div>
+  <div class="links">
+    <a href="https://github.com/An631/qualitas-vscode">GitHub</a>
+    <a href="https://github.com/An631/qualitas-vscode/releases">Releases</a>
+    <a href="https://www.npmjs.com/package/qualitas">npm</a>
   </div>
-</nav>
+</div></nav>
 
-<section class="hero">
-  <div class="container">
-    <img src="icon.png" alt="Qualitas" class="hero-icon">
-    <h1>Code Quality, Right in Your Editor</h1>
-    <p class="tagline">
-      Real-time quality scores, refactoring flags, and AI-powered fixes for every function you write.
-    </p>
-    <div class="cta">
-      <a href="https://marketplace.visualstudio.com/items?itemName=QualitasCorp.qualitas-vscode" class="btn btn-primary">
-        Install Extension
-      </a>
-      <a href="https://github.com/An631/qualitas-vscode" class="btn btn-secondary">
-        View on GitHub
-      </a>
-    </div>
-
-    <div class="score-demo">
-      <div class="codelens">Score A: 95.2</div>
-      <span class="keyword">function</span> <span class="fn-name">add</span>(<span class="param">a</span>: <span class="type">number</span>, <span class="param">b</span>: <span class="type">number</span>) <span class="brace">{</span><br>
-      &nbsp;&nbsp;<span class="keyword">return</span> a + b;<br>
-      <span class="brace">}</span><br><br>
-      <div class="codelens">Score C: 52.1</div>
-      <span class="keyword">function</span> <span class="fn-name squiggle">processOrders</span>(<span class="param">orders</span>, <span class="param">config</span>, <span class="param">logger</span>, <span class="param">db</span>, <span class="param">cache</span>) <span class="brace">{</span><br>
-      &nbsp;&nbsp;<span class="comment">// deeply nested logic...</span><br>
-      <span class="brace">}</span>
-    </div>
+<section class="hero"><div class="wrap">
+  <img src="icon.png" alt="Qualitas" class="hero-icon">
+  <h1>Code Quality, Right in Your Editor</h1>
+  <p class="sub">Real-time quality scores, refactoring flags, and AI-powered fixes for every function you write.</p>
+  <div class="cta">
+    <a href="https://marketplace.visualstudio.com/items?itemName=QualitasCorp.qualitas-vscode" class="btn btn-p">Install Extension</a>
+    <a href="https://github.com/An631/qualitas-vscode" class="btn btn-s">View on GitHub</a>
   </div>
-</section>
+  <div class="demo" data-scroll="bottom">
+    <div class="cl">Score A: 95.2</div>
+    <span class="kw">function</span> <span class="fn">add</span>(<span class="pr">a</span>: <span class="ty">number</span>, <span class="pr">b</span>: <span class="ty">number</span>) <span class="br">{</span><br>
+    &nbsp;&nbsp;<span class="kw">return</span> a + b;<br><span class="br">}</span><br><br>
+    <div class="cl">Score C: 52.1</div>
+    <span class="kw">function</span> <span class="fn sq">processOrders</span>(<span class="pr">orders</span>, <span class="pr">config</span>, <span class="pr">logger</span>, <span class="pr">db</span>, <span class="pr">cache</span>) <span class="br">{</span><br>
+    &nbsp;&nbsp;<span class="cm">// deeply nested logic...</span><br><span class="br">}</span>
+  </div>
+</div></section>
 
-<section class="features">
-  <div class="container">
-    <h2 class="reveal">Everything You Need to Write Better Code</h2>
-    <div class="feature-grid">
-      <div class="feature-card slide-left" style="transition-delay: 0.05s">
-        <div class="icon">A</div>
-        <h3>Quality Scores</h3>
-        <p>Every function and class gets a score from 0-100 and a grade from A to F, shown right above the code via CodeLens.</p>
-      </div>
-      <div class="feature-card slide-right" style="transition-delay: 0.1s">
-        <div class="icon">~</div>
-        <h3>Squiggly Underlines</h3>
-        <p>Functions that fail quality thresholds get squiggled on the function name with a detailed hover showing what went wrong.</p>
-      </div>
-      <div class="feature-card slide-left" style="transition-delay: 0.15s">
-        <div class="icon">&gt;</div>
-        <h3>Detailed Breakdown</h3>
-        <p>Hover over any score to see the full metric breakdown with point deductions per pillar, so you know exactly what to fix.</p>
-      </div>
-      <div class="feature-card slide-right" style="transition-delay: 0.2s">
-        <div class="icon">*</div>
-        <h3>Fix with AI</h3>
-        <p>One-click quick fix opens your AI assistant's chat with full context for targeted refactoring of quality issues.</p>
-      </div>
-      <div class="feature-card slide-left" style="transition-delay: 0.25s">
-        <div class="icon">#</div>
-        <h3>Project Config</h3>
-        <p>Analysis rules live in qualitas.config.js, shared across the team. VS Code settings control only extension behavior.</p>
-      </div>
-      <div class="feature-card slide-right" style="transition-delay: 0.3s">
-        <div class="icon">+</div>
-        <h3>Multi-Language</h3>
-        <p>Supports TypeScript, JavaScript, Python, and Rust out of the box. Automatically detects the language from file extension.</p>
-      </div>
-    </div>
+<section class="split wrap">
+  <div data-scroll="left">
+    <h2>Scores Above Every Function</h2>
+    <p>Each function and class gets a composite score (0-100) and a letter grade via CodeLens, right above the code. Hover to see the full metric breakdown with point deductions per pillar.</p>
+    <ul>
+      <li>CodeLens annotations: Score A: 92.3</li>
+      <li>Hover tooltip with 5-pillar breakdown</li>
+      <li>Status bar shows overall file grade</li>
+    </ul>
+  </div>
+  <div class="card-stack">
+    <div class="mini-card" data-scroll="right"><h4>Cognitive Flow</h4><p>Branching complexity, nesting depth, async patterns</p></div>
+    <div class="mini-card" data-scroll="left"><h4>Data Complexity</h4><p>Halstead difficulty, volume, and effort</p></div>
+    <div class="mini-card" data-scroll="right"><h4>Identifier Reference</h4><p>Variable scope span and reference frequency</p></div>
+    <div class="mini-card" data-scroll="left"><h4>Dependency Coupling</h4><p>Import count, external ratio, API surface</p></div>
+    <div class="mini-card" data-scroll="right"><h4>Structural</h4><p>Lines of code, parameter count, nesting, returns</p></div>
   </div>
 </section>
 
-<section class="getting-started">
-  <div class="container">
-    <h2 class="reveal">Getting Started</h2>
-    <p class="subtitle reveal">Choose your path: use the VS Code extension for real-time feedback, or the npm package for CLI and CI pipelines</p>
-
-    <div class="tabs reveal">
-      <button class="tab active" onclick="showTab('vscode', this)">VS Code Extension</button>
-      <button class="tab" onclick="showTab('npm', this)">npm Package</button>
-    </div>
-
-    <div id="tab-vscode" class="tab-content active">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <h3>Install the extension</h3>
-          <p>Install from the VS Code Marketplace or grab the .vsix from GitHub Releases.</p>
-          <code class="code-inline">code --install-extension qualitas-vscode-x.x.x.vsix</code>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <h3>Open a project</h3>
-          <p>Open any TypeScript, JavaScript, Python, or Rust project. Qualitas activates automatically and begins analyzing.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <h3>See scores instantly</h3>
-          <p>Every function gets a CodeLens score above it. Functions with issues get squiggly underlines on the name.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
-          <h3>Fix with AI</h3>
-          <p>Click the lightbulb on any squiggled function and choose <strong>"Fix with AI"</strong> to send it to your AI assistant with full context.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-body">
-          <h3>Configure your rules</h3>
-          <p>Add a <strong>qualitas.config.js</strong> to your project root. The whole team shares the same quality rules.</p>
-          <code class="code-inline">module.exports = { profile: "strict", threshold: 80 };</code>
-        </div>
-      </div>
-    </div>
-
-    <div id="tab-npm" class="tab-content">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <h3>Install the package</h3>
-          <p>Add qualitas as a dev dependency to your project.</p>
-          <code class="code-inline">npm install --save-dev qualitas</code>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <h3>Analyze from the CLI</h3>
-          <p>Run qualitas on your project to see a full quality report.</p>
-          <code class="code-inline">npx qualitas ./ -f detail</code>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <h3>Add to your scripts</h3>
-          <p>Add quality checks to package.json for CI integration.</p>
-          <code class="code-inline">"scripts": { "quality": "qualitas ./ -f detail" }</code>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
-          <h3>Use the API programmatically</h3>
-          <p>Import qualitas for custom analysis or automation.</p>
-          <code class="code-inline">const { analyzeSource } = require("qualitas");<br>const report = analyzeSource(source, "file.ts");<br>console.log(report.score, report.grade);</code>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-body">
-          <h3>Configure</h3>
-          <p>Create a <strong>qualitas.config.js</strong> to customize everything.</p>
-          <code class="code-inline">module.exports = {<br>&nbsp;&nbsp;profile: "strict",<br>&nbsp;&nbsp;threshold: 80,<br>&nbsp;&nbsp;exclude: ["vendor", "generated"],<br>};</code>
-        </div>
-      </div>
-    </div>
+<section class="split split-reverse wrap">
+  <div class="card-stack">
+    <div class="mini-card" data-scroll="left"><h4>~ Squiggly Underlines</h4><p>Functions failing thresholds get squiggled on the name with a detailed hover</p></div>
+    <div class="mini-card" data-scroll="right"><h4>* Fix with AI</h4><p>One click opens your AI assistant's chat with full context for targeted refactoring</p></div>
+    <div class="mini-card" data-scroll="left"><h4># Fix All with AI</h4><p>Send every flagged function in the file to your AI assistant in one command</p></div>
+  </div>
+  <div data-scroll="right">
+    <h2>Actionable Feedback</h2>
+    <p>Functions and classes that fail quality thresholds get squiggly underlines directly on the name. Click the lightbulb for AI-powered quick fixes that open your chat assistant with full context.</p>
+    <ul>
+      <li>Squiggles on function and class names</li>
+      <li>Consolidated hover with score + all flags</li>
+      <li>Fix with AI via chat panel, not inline</li>
+    </ul>
   </div>
 </section>
 
-<section class="pillars">
-  <div class="container">
-    <h2 class="reveal">5 Quality Pillars</h2>
-    <p class="subtitle reveal">Each function is measured across five research-backed dimensions</p>
-    <div class="pillar-list">
-      <div class="pillar slide-left" style="transition-delay: 0s">
-        <div class="score" style="color: var(--grade-a)">CFC</div>
-        <div class="label">Cognitive Flow</div>
-      </div>
-      <div class="pillar slide-right" style="transition-delay: 0.08s">
-        <div class="score" style="color: var(--grade-b)">DCI</div>
-        <div class="label">Data Complexity</div>
-      </div>
-      <div class="pillar scale-in" style="transition-delay: 0.16s">
-        <div class="score" style="color: var(--grade-c)">IRC</div>
-        <div class="label">Identifier Reference</div>
-      </div>
-      <div class="pillar slide-left" style="transition-delay: 0.24s">
-        <div class="score" style="color: var(--grade-d)">DC</div>
-        <div class="label">Dependency Coupling</div>
-      </div>
-      <div class="pillar slide-right" style="transition-delay: 0.32s">
-        <div class="score" style="color: var(--text-muted)">SM</div>
-        <div class="label">Structural</div>
-      </div>
-    </div>
+<section class="split wrap">
+  <div data-scroll="left">
+    <h2>Team Configuration</h2>
+    <p>Analysis rules live in qualitas.config.js and are committed to the repo. VS Code settings control only extension behavior. Same pattern as ESLint.</p>
+    <ul>
+      <li>Profiles: default, strict, cc-focused, data-focused</li>
+      <li>Per-language flag overrides</li>
+      <li>Custom weights for the 5 pillars</li>
+      <li>TypeScript, JavaScript, Python, Rust</li>
+    </ul>
   </div>
-</section>
-
-<section class="grades">
-  <div class="container">
-    <h2 class="reveal">Grades at a Glance</h2>
-    <div class="grade-bar reveal">
-      <div class="grade" style="background: var(--grade-a)">A</div>
-      <div class="grade" style="background: var(--grade-b)">B</div>
-      <div class="grade" style="background: var(--grade-c); color: #000">C</div>
-      <div class="grade" style="background: var(--grade-d)">D</div>
-      <div class="grade" style="background: var(--grade-f)">F</div>
-    </div>
-  </div>
-</section>
-
-<section class="config-section">
-  <div class="container">
-    <h2 class="reveal">Easy Configuration</h2>
-    <p class="subtitle reveal">Add a qualitas.config.js to your project root and the whole team shares the same rules</p>
-    <div class="config-block slide-right">
-      <span class="comment">// qualitas.config.js</span><br>
+  <div data-scroll="right">
+    <div class="cfg">
+      <span class="c">// qualitas.config.js</span><br>
       module.exports = {<br>
-      &nbsp;&nbsp;<span class="key">profile</span>: <span class="str">"strict"</span>,<br>
-      &nbsp;&nbsp;<span class="key">threshold</span>: <span class="num">80</span>,<br>
-      &nbsp;&nbsp;<span class="key">flags</span>: {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">tooManyParams</span>: { <span class="key">warn</span>: <span class="num">3</span>, <span class="key">error</span>: <span class="num">5</span> },<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">excessiveReturns</span>: <span class="bool">false</span>,<br>
+      &nbsp;&nbsp;<span class="k">profile</span>: <span class="s">"strict"</span>,<br>
+      &nbsp;&nbsp;<span class="k">threshold</span>: <span class="n">80</span>,<br>
+      &nbsp;&nbsp;<span class="k">flags</span>: {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">tooManyParams</span>: { <span class="k">warn</span>: <span class="n">3</span>, <span class="k">error</span>: <span class="n">5</span> },<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">excessiveReturns</span>: <span class="b">false</span>,<br>
       &nbsp;&nbsp;},<br>
-      &nbsp;&nbsp;<span class="key">languages</span>: {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">typescript</span>: {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">flags</span>: { <span class="key">deepNesting</span>: { <span class="key">warn</span>: <span class="num">3</span>, <span class="key">error</span>: <span class="num">5</span> } }<br>
+      &nbsp;&nbsp;<span class="k">languages</span>: {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">typescript</span>: {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">flags</span>: { <span class="k">deepNesting</span>: { <span class="k">warn</span>: <span class="n">3</span>, <span class="k">error</span>: <span class="n">5</span> } }<br>
       &nbsp;&nbsp;&nbsp;&nbsp;}<br>
       &nbsp;&nbsp;}<br>
       };
@@ -831,54 +335,111 @@
   </div>
 </section>
 
-<section class="final-cta">
-  <div class="container">
-    <h2 class="reveal">Start Writing Better Code Today</h2>
-    <p class="reveal">Install the extension and see your code quality scores in seconds.</p>
-    <div class="cta reveal">
-      <a href="https://marketplace.visualstudio.com/items?itemName=QualitasCorp.qualitas-vscode" class="btn btn-primary">
-        Install from Marketplace
-      </a>
-      <a href="https://www.npmjs.com/package/qualitas" class="btn btn-secondary">
-        qualitas on npm
-      </a>
-    </div>
+<section class="pillars"><div class="wrap">
+  <h2 data-scroll="bottom">5 Quality Pillars</h2>
+  <p class="sub" data-scroll="bottom">Each function is measured across five research-backed dimensions</p>
+  <div class="pillar-row">
+    <div class="pill" data-scroll="left"><div class="abbr" style="color:var(--ga)">CFC</div><div class="lbl">Cognitive Flow</div></div>
+    <div class="pill" data-scroll="left"><div class="abbr" style="color:var(--gb)">DCI</div><div class="lbl">Data Complexity</div></div>
+    <div class="pill" data-scroll="bottom"><div class="abbr" style="color:var(--gc)">IRC</div><div class="lbl">Identifier Reference</div></div>
+    <div class="pill" data-scroll="right"><div class="abbr" style="color:var(--gd)">DC</div><div class="lbl">Dependency Coupling</div></div>
+    <div class="pill" data-scroll="right"><div class="abbr" style="color:var(--muted)">SM</div><div class="lbl">Structural</div></div>
   </div>
-</section>
+</div></section>
 
-<footer>
-  <div class="container">
-    <p>
-      <a href="https://github.com/An631/qualitas-vscode">qualitas-vscode</a> &middot;
-      <a href="https://github.com/An631/qualitas">qualitas</a> &middot;
-      MIT License
-    </p>
+<section class="grades"><div class="wrap">
+  <h2 data-scroll="bottom">Grades at a Glance</h2>
+  <div class="grade-row" data-scroll="bottom">
+    <div class="g" style="background:var(--ga)">A</div>
+    <div class="g" style="background:var(--gb)">B</div>
+    <div class="g" style="background:var(--gc);color:#000">C</div>
+    <div class="g" style="background:var(--gd)">D</div>
+    <div class="g" style="background:var(--gf)">F</div>
   </div>
-</footer>
+</div></section>
+
+<section class="started"><div class="wrap">
+  <h2 data-scroll="bottom">Getting Started</h2>
+  <p class="sub" data-scroll="bottom">Use the VS Code extension for real-time feedback, or the npm package for CLI and CI</p>
+  <div class="tabs" data-scroll="bottom">
+    <button class="tab on" onclick="showTab('vsc',this)">VS Code Extension</button>
+    <button class="tab" onclick="showTab('npm',this)">npm Package</button>
+  </div>
+  <div id="t-vsc" class="tp on">
+    <div class="step" data-scroll="left"><div class="sn">1</div><div class="sb"><h3>Install the extension</h3><p>Install from the VS Code Marketplace or download the .vsix from GitHub Releases.</p><code class="ci">code --install-extension qualitas-vscode-x.x.x.vsix</code></div></div>
+    <div class="step" data-scroll="right"><div class="sn">2</div><div class="sb"><h3>Open a project</h3><p>Open any TypeScript, JavaScript, Python, or Rust project. Qualitas activates automatically.</p></div></div>
+    <div class="step" data-scroll="left"><div class="sn">3</div><div class="sb"><h3>See scores instantly</h3><p>Every function gets a CodeLens score. Functions with issues get squiggly underlines.</p></div></div>
+    <div class="step" data-scroll="right"><div class="sn">4</div><div class="sb"><h3>Fix with AI</h3><p>Click the lightbulb on any squiggled function and choose "Fix with AI" to open your AI chat.</p></div></div>
+    <div class="step" data-scroll="left"><div class="sn">5</div><div class="sb"><h3>Configure</h3><p>Add a qualitas.config.js to your project root. The whole team shares the same rules.</p><code class="ci">module.exports = { profile: "strict", threshold: 80 };</code></div></div>
+  </div>
+  <div id="t-npm" class="tp">
+    <div class="step" data-scroll="left"><div class="sn">1</div><div class="sb"><h3>Install</h3><p>Add qualitas as a dev dependency.</p><code class="ci">npm install --save-dev qualitas</code></div></div>
+    <div class="step" data-scroll="right"><div class="sn">2</div><div class="sb"><h3>Analyze</h3><p>Run qualitas on your project for a full quality report.</p><code class="ci">npx qualitas ./ -f detail</code></div></div>
+    <div class="step" data-scroll="left"><div class="sn">3</div><div class="sb"><h3>Add to scripts</h3><p>Add quality checks to package.json for CI.</p><code class="ci">"scripts": { "quality": "qualitas ./ -f detail" }</code></div></div>
+    <div class="step" data-scroll="right"><div class="sn">4</div><div class="sb"><h3>Use the API</h3><p>Import qualitas for custom analysis or automation.</p><code class="ci">const { analyzeSource } = require("qualitas");<br>const report = analyzeSource(source, "file.ts");</code></div></div>
+    <div class="step" data-scroll="left"><div class="sn">5</div><div class="sb"><h3>Configure</h3><p>Create a qualitas.config.js to customize everything.</p><code class="ci">module.exports = { profile: "strict", threshold: 80 };</code></div></div>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2 data-scroll="bottom">Start Writing Better Code Today</h2>
+  <p data-scroll="bottom">Install the extension and see your code quality scores in seconds.</p>
+  <div class="cta" data-scroll="bottom">
+    <a href="https://marketplace.visualstudio.com/items?itemName=QualitasCorp.qualitas-vscode" class="btn btn-p">Install from Marketplace</a>
+    <a href="https://www.npmjs.com/package/qualitas" class="btn btn-s">qualitas on npm</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a href="https://github.com/An631/qualitas-vscode">qualitas-vscode</a> &middot;
+  <a href="https://github.com/An631/qualitas">qualitas</a> &middot; MIT License
+</div></footer>
 
 <script>
-// Scroll reveal
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
-  });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+addEventListener('scroll', function() { document.querySelector('nav').classList.toggle('scrolled', scrollY > 20); });
 
-document.querySelectorAll('.reveal, .slide-left, .slide-right, .scale-in').forEach(el => observer.observe(el));
+var DISTANCE = window.innerWidth < 768 ? 60 : 150;
 
-// Nav scroll effect
-window.addEventListener('scroll', () => {
-  document.querySelector('nav').classList.toggle('scrolled', window.scrollY > 20);
-});
+function updateScroll() {
+  var scrollEls = document.querySelectorAll('[data-scroll]');
+  var vh = window.innerHeight;
+  var atBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 10);
 
-// Tabs
+  for (var i = 0; i < scrollEls.length; i++) {
+    var el = scrollEls[i];
+    var rect = el.getBoundingClientRect();
+    var dir = el.getAttribute('data-scroll');
+
+    // Animation completes when element reaches 55% from top of viewport
+    // This leaves a large "grace zone" in the upper half where content is static
+    var start = vh * 0.95;   // begin animating just before entering viewport
+    var end = vh * 0.55;     // fully visible at center of viewport
+    var t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)));
+
+    // If at the bottom of the page, force all visible elements to full opacity
+    if (atBottom && rect.top < vh) t = 1;
+
+    var offset = (1 - t) * DISTANCE;
+    var tx = 0, ty = 0;
+    if (dir === 'left') tx = -offset;
+    if (dir === 'right') tx = offset;
+    if (dir === 'bottom') ty = offset * 0.5;
+
+    el.style.opacity = String(t);
+    el.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+
+  }
+}
+
+addEventListener('scroll', updateScroll);
+addEventListener('resize', updateScroll);
+updateScroll();
+
 function showTab(id, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
+  document.querySelectorAll('.tp').forEach(e => e.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('on'));
+  document.getElementById('t-' + id).classList.add('on');
+  btn.classList.add('on');
 }
 </script>
 </body>
