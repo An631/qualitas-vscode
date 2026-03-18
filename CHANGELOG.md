@@ -1,5 +1,13 @@
 # qualitas-vscode
 
+## 0.1.20
+
+### Patch Changes
+
+- [`b2d7289`](https://github.com/An631/qualitas-vscode/commit/b2d7289d041ba970df8a33baf4152616fa31bc8a) - Adding improvements to the landing website
+
+- [#18](https://github.com/An631/qualitas-vscode/pull/18) [`67183d9`](https://github.com/An631/qualitas-vscode/commit/67183d9db2a174e8172ed5c62468582db37e337a) Thanks [@An631](https://github.com/An631)! - Upgrade qualitas to v0.4.0
+
 ## 0.1.19
 
 ### Patch Changes
