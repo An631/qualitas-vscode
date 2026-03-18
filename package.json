@@ -2,7 +2,7 @@
   "name": "qualitas-vscode",
   "displayName": "Qualitas",
   "description": "Real-time code quality scores, refactoring flags, and improvement suggestions inline — powered by qualitas",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "publisher": "QualitasCorp",
   "license": "MIT",
   "engines": {
