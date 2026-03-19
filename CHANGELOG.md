@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.1.21
+
+### Patch Changes
+
+- [#19](https://github.com/An631/qualitas-vscode/pull/19) [`84a400c`](https://github.com/An631/qualitas-vscode/commit/84a400c7abfcaf87b088320d677076ba81e1c83d) Thanks [@An631](https://github.com/An631)! - Updating to qualitas version 0.4.1
+
 ## 0.1.20
 
 ### Patch Changes
