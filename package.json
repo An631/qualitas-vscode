@@ -53,6 +53,10 @@
       {
         "command": "qualitas.fixAllWithAI",
         "title": "Qualitas: Fix All Issues with AI"
+      },
+      {
+        "command": "qualitas.restart",
+        "title": "Qualitas: Restart"
       }
     ],
     "configuration": {
@@ -134,13 +138,13 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "qualitas": "^0.4.1"
+    "qualitas": "^0.5.1"
   },
   "optionalDependencies": {
-    "@qualitas/binding-darwin-arm64": "^0.4.0",
-    "@qualitas/binding-darwin-x64": "^0.4.0",
-    "@qualitas/binding-linux-arm64-gnu": "^0.4.0",
-    "@qualitas/binding-linux-x64-gnu": "^0.4.0",
-    "@qualitas/binding-win32-x64-msvc": "^0.4.1"
+    "@qualitas/binding-darwin-arm64": "^0.5.1",
+    "@qualitas/binding-darwin-x64": "^0.5.1",
+    "@qualitas/binding-linux-arm64-gnu": "^0.5.1",
+    "@qualitas/binding-linux-x64-gnu": "^0.5.1",
+    "@qualitas/binding-win32-x64-msvc": "^0.5.1"
   }
 }
