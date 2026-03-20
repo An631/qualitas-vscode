@@ -85,7 +85,9 @@ export function registerAICommands(
 ${diag.message}
 
 Requirements:,
-- If splitting a function creates new functions, ensure those also meet the quality threshold.
+- If you need to split a function consider this:
+  - Before creating new functions with a function split, verify if the code base already has a helper function that can replace the new function that will be created, try to reduce code duplication when possible. 
+  - If you create new functions, ensure those also meet the quality threshold (you can run npx qualitas ./path/to/file -f flagged to re-check the quality of the new functions).
 - It is critical that we preserve the existing code behavior after the refactor.
 `;
 
@@ -176,31 +178,53 @@ function buildFixAllPrompt(
   return buildPromptMessage(issues, threshold, filePath);
 }
 
+function formatLocation(file: string, line: number): string {
+  return file ? `${file}:${line}` : `line ${line}`;
+}
+
+function formatIssueHeader(
+  name: string,
+  loc: string,
+  grade: string,
+  score: number,
+): string[] {
+  return [
+    `## ${name} at ${loc}`,
+    `   Score: ${grade} (${score.toFixed(1)}/100)`,
+  ];
+}
+
+function formatThresholdWarning(score: number, threshold: number): string[] {
+  return score < threshold
+    ? [`   Score is below the threshold of ${threshold}.`]
+    : [];
+}
+
+function formatFlagList(
+  flags: Array<{ message: string; suggestion: string }>,
+): string[] {
+  if (flags.length === 0) return [];
+  const lines = ["   Issues:"];
+  for (const flag of flags) {
+    lines.push(`   - ${flag.message}`);
+    lines.push(`     ${flag.suggestion}`);
+  }
+  return lines;
+}
+
 function collectFunctionIssues(
   fn: FunctionQualityReport,
   issues: string[],
   threshold: number,
 ): void {
-  const hasFlags = fn.flags.length > 0;
-  const belowThreshold = fn.score < threshold;
+  if (fn.flags.length === 0 && fn.score >= threshold) return;
 
-  if (!hasFlags && !belowThreshold) return;
-
-  const loc = fn.location.file
-    ? `${fn.location.file}:${fn.location.startLine}`
-    : `line ${fn.location.startLine}`;
+  const loc = formatLocation(fn.location.file, fn.location.startLine);
   const parts = [
-    `${fn.name} at ${loc} scored ${fn.grade} (${fn.score.toFixed(1)}/100)`,
+    ...formatIssueHeader(`${fn.name}()`, loc, fn.grade, fn.score),
+    ...formatThresholdWarning(fn.score, threshold),
+    ...formatFlagList(fn.flags),
   ];
-
-  if (belowThreshold) {
-    parts.push(`  Score is below the threshold of ${threshold}.`);
-  }
-
-  for (const flag of fn.flags) {
-    parts.push(`  - ${flag.message}`);
-    parts.push(`    ${flag.suggestion}`);
-  }
 
   issues.push(parts.join("\n"));
 }
@@ -216,26 +240,14 @@ function collectClassIssues(
   issues: string[],
   threshold: number,
 ): void {
-  const hasClassFlags = cls.flags.length > 0;
-  const classBelowThreshold = cls.score < threshold;
+  if (cls.flags.length === 0 && cls.score >= threshold) return;
 
-  if (!hasClassFlags && !classBelowThreshold) return;
-
-  const loc = cls.location.file
-    ? `${cls.location.file}:${cls.location.startLine}`
-    : `line ${cls.location.startLine}`;
+  const loc = formatLocation(cls.location.file, cls.location.startLine);
   const parts = [
-    `class ${cls.name} at ${loc} scored ${cls.grade} (${cls.score.toFixed(1)}/100)`,
+    ...formatIssueHeader(`class ${cls.name}`, loc, cls.grade, cls.score),
+    ...formatThresholdWarning(cls.score, threshold),
+    ...formatFlagList(cls.flags),
   ];
-
-  if (classBelowThreshold) {
-    parts.push(`  Score is below the threshold of ${threshold}.`);
-  }
-
-  for (const flag of cls.flags) {
-    parts.push(`  - ${flag.message}`);
-    parts.push(`    ${flag.suggestion}`);
-  }
 
   issues.push(parts.join("\n"));
 }
@@ -252,7 +264,7 @@ function buildPromptMessage(
     "",
     "Issues to fix:",
     "",
-    ...issues,
+    ...issues.flatMap((issue) => [issue, ""]),
     "",
     "Requirements:",
     "- Refactor each flagged function and class to address the specific issues listed above.",

@@ -123,6 +123,15 @@ function registerEventHandlers(
       reportCache.delete(doc.uri.toString());
     }),
   );
+
+  // Watch for qualitas.config.js changes and auto-reload
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      if (doc.fileName.endsWith("qualitas.config.js")) {
+        handleConfigFileChange();
+      }
+    }),
+  );
 }
 
 function handleActiveEditorChange(editor: vscode.TextEditor | undefined): void {
@@ -194,6 +203,12 @@ function registerCommands(context: vscode.ExtensionContext): void {
       handleShowReportCommand();
     }),
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("qualitas.restart", () => {
+      handleRestartCommand();
+    }),
+  );
 }
 
 function handleAnalyzeFileCommand(): void {
@@ -253,6 +268,38 @@ function handleShowReportCommand(): void {
     return;
   }
   showReport(report);
+}
+
+function handleRestartCommand(): void {
+  clearConfigCache();
+  diagnosticCollection.clear();
+  reportCache.clear();
+  outputChannel.appendLine("[qualitas] Extension restarted. Config reloaded.");
+
+  // Re-analyze all visible editors
+  for (const editor of vscode.window.visibleTextEditors) {
+    if (isSupported(editor.document)) {
+      runAnalysis(editor);
+    }
+  }
+
+  vscode.window.showInformationMessage(
+    "Qualitas: Restarted and config reloaded.",
+  );
+}
+
+function handleConfigFileChange(): void {
+  clearConfigCache();
+  outputChannel.appendLine(
+    "[qualitas] qualitas.config.js changed. Reloading config...",
+  );
+
+  // Re-analyze all visible editors with new config
+  for (const editor of vscode.window.visibleTextEditors) {
+    if (isSupported(editor.document)) {
+      runAnalysis(editor);
+    }
+  }
 }
 
 export function deactivate(): void {
