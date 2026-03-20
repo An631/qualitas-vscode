@@ -1,5 +1,11 @@
 # qualitas-vscode
 
+## 0.2.0
+
+### Minor Changes
+
+- [#21](https://github.com/An631/qualitas-vscode/pull/21) [`efb0b56`](https://github.com/An631/qualitas-vscode/commit/efb0b56672d90187d5c7e92adca436aedfb0c29a) Thanks [@An631](https://github.com/An631)! - Add restart command, auto-reload config on save, upgrade qualitas to 0.5.1, improve AI prompt formatting
+
 ## 0.1.21
 
 ### Patch Changes
